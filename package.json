@@ -12,9 +12,13 @@
     "clean": "rm -rf .next"
   },
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.15.0",
+    "@supabase/supabase-js": "^2.105.4",
+    "lucide-react": "^1.14.0",
     "next": "14.2.3",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-icons": "^5.6.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.2",

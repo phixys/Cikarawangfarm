@@ -15,9 +15,9 @@ interface AqiqahCardProps {
 }
 
 const cardBgMap: Record<AqiqahBadge, string> = {
-  tersedia:   'bg-gradient-to-br from-primary-medium to-primary-dark',
-  terpopuler: 'bg-gradient-to-br from-primary-dark to-[#1a3d2b]',
-  baru:       'bg-gradient-to-br from-primary-light to-primary-medium',
+  tersedia:   'bg-gradient-to-br from-[#40916C] to-[#2D6A4F]',
+  terpopuler: 'bg-gradient-to-br from-[#1B4332] to-[#144125]',
+  baru:       'bg-gradient-to-br from-[#74C69D] to-[#4C9A78]',
 };
 
 export default function AqiqahCard({
@@ -32,8 +32,7 @@ export default function AqiqahCard({
   return (
     <div
       className={`
-        rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200
-        ${isFeatured ? 'ring-2 ring-primary-medium' : ''}
+        rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 hover:ring-2 hover:ring-primary-medium transition-all duration-200
       `}
     >
       {/* Card image header */}
