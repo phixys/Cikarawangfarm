@@ -1,5 +1,3 @@
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import CatalogClient from '@/components/catalog/CatalogClient';
 
 export const metadata = {
@@ -9,12 +7,8 @@ export const metadata = {
 
 export default function KatalogTernakPage() {
   return (
-    <div className="min-h-screen bg-gray-50 font-poppins flex flex-col">
-      <Navbar />
-      <div className="flex-1">
-        <CatalogClient />
-      </div>
-      <Footer />
-    </div>
+    // Navbar dan Footer sudah otomatis ada dari layout.tsx
+    // div wrapper juga tidak perlu lagi karena sudah ada di body layout
+    <CatalogClient />
   );
 }

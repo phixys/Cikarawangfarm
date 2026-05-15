@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import {
   Search,
   Loader2,
@@ -13,84 +11,6 @@ import {
   Download,
   MessageCircle,
 } from 'lucide-react';
-import { FaWhatsapp, FaInstagram, FaFacebookF } from 'react-icons/fa6';
-import Navbar from '@/components/Navbar';
-
-/* ─────────────────────────────────────────
-   FOOTER
-───────────────────────────────────────── */
-function Footer() {
-  const navLinks = [
-    { label: 'Beranda', href: '/' },
-    { label: 'Katalog Ternak', href: '/katalog-ternak' },
-    { label: 'Paket Aqiqah', href: '/paket-aqiqah' },
-    { label: 'Status Pesanan', href: '/status-pesanan' },
-  ];
-
-  return (
-    <footer className="bg-[#2D6A4F] text-white pt-14 pb-8 px-8">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
-        <div>
-          <div className="flex items-center gap-2.5 mb-3">
-            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
-              <Image src="/logo.png" alt="Logo" width={30} height={30} className="object-contain" />
-            </div>
-            <span className="text-white font-semibold text-[15px]">Cikarawang Farm</span>
-          </div>
-          <p className="text-white/65 text-[13px] leading-relaxed">
-            Peternakan domba berkualitas di Bogor, Jawa Barat. Melayani pemesanan ternak dan paket aqiqah.
-          </p>
-        </div>
-
-        <div>
-          <h4 className="text-white font-semibold text-[14px] mb-4">Navigasi</h4>
-          <ul className="space-y-2.5">
-            {navLinks.map((link) => (
-              <li key={link.label}>
-                <Link href={link.href} className="text-white/65 text-[13px] hover:text-white transition-colors">
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-white font-semibold text-[14px] mb-4">Kontak</h4>
-          <ul className="space-y-2.5">
-            <li className="text-white/65 text-[13px]">Cikarawang, Bogor</li>
-            <li className="text-white/65 text-[13px]">0812-3456-789</li>
-            <li className="text-white/65 text-[13px]">info@cikarawangfarm.id</li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-white font-semibold text-[14px] mb-4">Sosial Media</h4>
-          <div className="flex items-center gap-3">
-            {[
-              { icon: <FaWhatsapp size={17} />, label: 'WhatsApp' },
-              { icon: <FaInstagram size={17} />, label: 'Instagram' },
-              { icon: <FaFacebookF size={17} />, label: 'Facebook' },
-            ].map(({ icon, label }) => (
-              <a
-                key={label}
-                href="#"
-                aria-label={label}
-                className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/35 transition-colors duration-150"
-              >
-                {icon}
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-[1200px] mx-auto border-t border-white/15 pt-6 text-center">
-        <p className="text-white/45 text-[12px]">© 2024 Cikarawang Farm. Semua hak dilindungi.</p>
-      </div>
-    </footer>
-  );
-}
 
 /* ─────────────────────────────────────────
    STEPPER
@@ -287,10 +207,8 @@ export default function StatusPesananPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0FFF4] font-poppins flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 py-12 px-6">
+    <div className="bg-[#F0FFF4] w-full min-h-screen">
+      <div className="py-12 px-6">
         <div className="max-w-4xl mx-auto">
 
           {/* Title */}
@@ -338,9 +256,7 @@ export default function StatusPesananPage() {
             <ReceiptCard invoiceNumber={invoiceNumber} />
           )}
         </div>
-      </main>
-
-      <Footer />
+      </div>
     </div>
   );
 }

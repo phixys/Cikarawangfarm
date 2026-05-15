@@ -40,6 +40,10 @@ export default function Navbar() {
           if (data?.full_name) {
             setFullName(data.full_name);
           }
+        } else {
+          // Jika tidak ada session, pastikan state kosong
+          setUser(null);
+          setFullName('');
         }
       } catch (err) {
         console.error('Error fetching user:', err);
@@ -49,11 +53,42 @@ export default function Navbar() {
     };
 
     fetchUser();
-  }, []);
 
+    // Listener otomatis: Memantau jika user Login atau Logout
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setFullName('');
+        router.refresh();
+      } else if (event === 'SIGNED_IN') {
+        fetchUser();
+      }
+    });
+
+    // Bersihkan listener saat komponen dilepas
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
+
+  // Fungsi Logout yang diperbarui
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
+    try {
+      setLoading(true);
+      await supabase.auth.signOut();
+      
+      // Kosongkan state secara manual
+      setUser(null);
+      setFullName('');
+      
+      // Segarkan cache dan arahkan ke beranda
+      router.refresh();
+      router.push('/');
+    } catch (error) {
+      console.error('Error saat logout:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Extract first name from full name
@@ -71,7 +106,7 @@ export default function Navbar() {
   const initial = fullName ? getInitial(fullName) : 'U';
 
   return (
-    <nav className="bg-primary-dark sticky top-0 z-50 w-full">
+    <nav className="bg-[#2D6A4F] sticky top-0 z-50 w-full">
       <div className="max-w-[1200px] mx-auto px-6 h-[64px] flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
@@ -121,12 +156,13 @@ export default function Navbar() {
               </span>
               <button
                 onClick={handleLogout}
-                className="text-[13px] font-medium text-white border border-white/80 rounded-full px-3 py-1.5 hover:bg-white/10 transition-colors duration-150"
+                disabled={loading}
+                className="text-[13px] font-medium text-white border border-white/80 rounded-full px-3 py-1.5 hover:bg-white/10 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Logout
               </button>
             </div>
-          ) : (
+          ) : !loading && !user ? (
             // Belum login
             <div className="flex items-center gap-2">
               <Link
@@ -137,15 +173,14 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/daftar"
-                className="text-[13px] font-semibold text-primary-dark bg-primary-tint rounded-full px-4 py-1.5 hover:bg-white transition-colors duration-150"
+                className="text-[13px] font-semibold text-[#2D6A4F] bg-[#E8F5E9] rounded-full px-4 py-1.5 hover:bg-white transition-colors duration-150"
               >
                 Daftar
               </Link>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </nav>
   );
 }
-

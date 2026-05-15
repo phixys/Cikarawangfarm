@@ -53,7 +53,7 @@ export default function Footer() {
             <h4 className="font-semibold text-[14px] mb-4">Kontak</h4>
             <ul className="space-y-2.5">
               <li className="text-white/65 text-[13px]">Cikarawang, Bogor</li>
-              <li className="text-white/65 text-[13px]">0812-3456-789</li>
+              <li className="text-white/65 text-[13px]">+62 818-953-958</li>
               <li className="text-white/65 text-[13px]">info@cikarawangfarm.id</li>
             </ul>
           </div>
@@ -64,7 +64,7 @@ export default function Footer() {
             <div className="flex items-center gap-3">
               {/* WhatsApp */}
               <a
-                href="https://wa.me/6281234567890"
+                href="https://wa.me/62818953958"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
@@ -108,7 +108,7 @@ export default function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/15">
         <div className="max-w-[1200px] mx-auto px-6 py-4 text-center text-white/40 text-[12px]">
-          © 2024 Cikarawang Farm. Semua hak dilindungi.
+          © 2026 Cikarawang Farm. Semua hak dilindungi.
         </div>
       </div>
     </footer>

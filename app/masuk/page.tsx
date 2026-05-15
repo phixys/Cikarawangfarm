@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ArrowLeft, Leaf, ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -22,7 +21,6 @@ function GoogleLogo() {
    MAIN PAGE
 ───────────────────────────────────────── */
 export default function MasukPage() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState('');
@@ -31,12 +29,21 @@ export default function MasukPage() {
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState('');
 
+  // 1. PENJAGA HALAMAN: Jika sudah login, langsung tendang ke beranda!
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        window.location.href = '/'; 
+      }
+    };
+    checkSession();
+  }, []);
+
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
     setInfo('');
-
-    console.log('Login submit', { email, password });
 
     if (!email.trim() || !password.trim()) {
       setError('Email dan kata sandi harus diisi');
@@ -45,27 +52,51 @@ export default function MasukPage() {
 
     try {
       setLoading(true);
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
-      console.log('Supabase signIn result', { data, signInError });
 
       if (signInError) {
         setError(signInError.message);
         return;
       }
 
-      if (!data?.session) {
+      if (!authData?.session) {
         setError('Login berhasil, tetapi sesi tidak terbentuk. Coba muat ulang halaman.');
         return;
       }
 
-      setInfo('Login berhasil. Mengalihkan...');
+      setInfo('Login berhasil. Memeriksa hak akses...');
+
+      // 2. Ambil Role pengguna dari tabel profiles
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Gagal mengambil role:', profileError);
+        // Jika gagal ambil role, paksa pindah ke beranda
+        window.location.href = '/';
+        return;
+      }
+
+      // 3. Arahkan (Redirect) sesuai Role
+      const userRole = profileData?.role;
+
       setTimeout(() => {
-        router.push('/');
+        if (userRole === 'admin') {
+          // Akan pindah ke halaman admin (pastikan foldernya sudah ada)
+          window.location.href = '/admin/stock'; 
+        } else if (userRole === 'owner') {
+          window.location.href = '/owner/finance';
+        } else {
+          window.location.href = '/'; 
+        }
       }, 500);
+
     } catch (err: any) {
       console.error('Login error', err);
       setError(err?.message ?? 'Terjadi kesalahan saat masuk');
@@ -74,12 +105,33 @@ export default function MasukPage() {
     }
   };
 
+const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          // 🟢 UBAH BARIS INI: Hapus tulisan /auth/callback
+          redirectTo: `${window.location.origin}/` 
+        }
+      });
+
+      if (error) {
+        setError(error.message);
+      }
+    } catch (err: any) {
+      console.error('Google login error:', err);
+      setError('Terjadi kesalahan saat menghubungkan ke Google.');
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 bg-[#F0FFF4] font-poppins">
-      {/* Card container */}
       <div className="max-w-[900px] w-full">
 
-        {/* Back button */}
         <Link
           href="/"
           className="inline-flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-sm text-gray-700 hover:text-[#2D6A4F] text-[13.5px] font-medium mb-6 transition-colors duration-150"
@@ -88,33 +140,24 @@ export default function MasukPage() {
           Kembali ke Beranda
         </Link>
 
-        {/* Main card */}
         <div className="w-full bg-white rounded-[2rem] shadow-xl flex flex-col md:flex-row overflow-hidden">
-
           {/* ── LEFT PANEL ── */}
           <div className="w-full md:w-5/12 bg-[#2D6A4F] p-10 flex flex-col justify-between">
             <div>
-              {/* Brand */}
               <div className="flex items-center gap-3 mb-12">
                 <div className="w-10 h-10 bg-white/15 rounded-full flex items-center justify-center">
                   <Leaf size={20} className="text-white" strokeWidth={2} />
                 </div>
                 <span className="text-white font-bold text-[16px]">Cikarawang Farm</span>
               </div>
-
-              {/* Title */}
               <h2 className="text-white text-[2rem] font-bold leading-snug mb-4">
                 Solusi Aqiqah &amp;<br />Peternakan Terpadu
               </h2>
-
-              {/* Description */}
               <p className="text-white/75 text-[13.5px] leading-relaxed">
                 Masuk untuk mengelola pesanan aqiqah, melacak status pengiriman, dan mendapatkan
                 penawaran eksklusif dari peternakan kami.
               </p>
             </div>
-
-            {/* Bottom badge */}
             <div className="mt-12 bg-white/10 p-4 rounded-xl flex items-center gap-4">
               <div className="w-10 h-10 bg-white/15 rounded-full flex items-center justify-center shrink-0">
                 <ShieldCheck size={20} className="text-white" strokeWidth={2} />
@@ -128,13 +171,11 @@ export default function MasukPage() {
 
           {/* ── RIGHT PANEL ── */}
           <div className="w-full md:w-7/12 bg-white p-8 md:p-14">
-            {/* Header */}
             <h1 className="text-[#2D6A4F] text-3xl font-bold mb-2">Selamat Datang!</h1>
             <p className="text-gray-500 text-[13.5px] mb-8">
               Silakan masukkan detail akun Anda untuk melanjutkan.
             </p>
 
-            {/* Form */}
             <form onSubmit={handleSignIn} className="space-y-5">
               {error && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -147,17 +188,10 @@ export default function MasukPage() {
                 </div>
               )}
 
-              {/* Email field */}
               <div>
-                <label className="block text-[13.5px] font-medium text-gray-700 mb-1.5">
-                  Alamat Email
-                </label>
+                <label className="block text-[13.5px] font-medium text-gray-700 mb-1.5">Alamat Email</label>
                 <div className="relative">
-                  <Mail
-                    size={16}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                    strokeWidth={2}
-                  />
+                  <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" strokeWidth={2} />
                   <input
                     type="email"
                     value={email}
@@ -168,17 +202,10 @@ export default function MasukPage() {
                 </div>
               </div>
 
-              {/* Password field */}
               <div>
-                <label className="block text-[13.5px] font-medium text-gray-700 mb-1.5">
-                  Kata Sandi
-                </label>
+                <label className="block text-[13.5px] font-medium text-gray-700 mb-1.5">Kata Sandi</label>
                 <div className="relative">
-                  <Lock
-                    size={16}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                    strokeWidth={2}
-                  />
+                  <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" strokeWidth={2} />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
@@ -190,22 +217,18 @@ export default function MasukPage() {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-150"
-                    aria-label={showPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
                   >
                     {showPassword ? <Eye size={16} strokeWidth={2} /> : <EyeOff size={16} strokeWidth={2} />}
                   </button>
                 </div>
               </div>
 
-              {/* Options row */}
               <div className="flex items-center justify-between pt-1">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <div
                     onClick={() => setRememberMe(!rememberMe)}
                     className={`w-4 h-4 rounded border flex items-center justify-center transition-all duration-150 cursor-pointer ${
-                      rememberMe
-                        ? 'bg-[#2D6A4F] border-[#2D6A4F]'
-                        : 'border-gray-300 bg-white'
+                      rememberMe ? 'bg-[#2D6A4F] border-[#2D6A4F]' : 'border-gray-300 bg-white'
                     }`}
                   >
                     {rememberMe && (
@@ -216,15 +239,11 @@ export default function MasukPage() {
                   </div>
                   <span className="text-[13.5px] text-gray-600 select-none">Ingat saya</span>
                 </label>
-                <Link
-                  href="/lupa-sandi"
-                  className="text-[13.5px] font-semibold text-[#2D6A4F] hover:text-[#40916C] transition-colors duration-150"
-                >
+                <Link href="/lupa-sandi" className="text-[13.5px] font-semibold text-[#2D6A4F] hover:text-[#40916C] transition-colors duration-150">
                   Lupa sandi?
                 </Link>
               </div>
 
-              {/* Submit button */}
               <button
                 type="submit"
                 disabled={loading}
@@ -235,33 +254,30 @@ export default function MasukPage() {
               </button>
             </form>
 
-            {/* Divider */}
             <div className="flex items-center my-7">
               <div className="flex-1 h-px bg-gray-200" />
-              <span className="mx-4 text-[11.5px] text-gray-400 font-semibold tracking-widest uppercase">
-                Atau Masuk Dengan
-              </span>
+              <span className="mx-4 text-[11.5px] text-gray-400 font-semibold tracking-widest uppercase">Atau Masuk Dengan</span>
               <div className="flex-1 h-px bg-gray-200" />
             </div>
 
-            {/* Google button */}
-            <button className="w-full border border-gray-200 py-3 rounded-xl flex items-center justify-center gap-3 text-[14px] font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-150">
+            {/* 🟢 TOMBOL GOOGLE YANG SUDAH DIPERBARUI */}
+            <button 
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full border border-gray-200 py-3 rounded-xl flex items-center justify-center gap-3 text-[14px] font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <GoogleLogo />
-              Google
+              {loading ? 'Menghubungkan...' : 'Google'}
             </button>
 
-            {/* Footer */}
             <p className="text-center text-[13.5px] text-gray-600 mt-8">
               Belum punya akun?{' '}
-              <Link
-                href="/daftar"
-                className="text-[#2D6A4F] font-semibold hover:text-[#40916C] transition-colors duration-150"
-              >
+              <Link href="/daftar" className="text-[#2D6A4F] font-semibold hover:text-[#40916C] transition-colors duration-150">
                 Daftar sekarang
               </Link>
             </p>
           </div>
-
         </div>
       </div>
     </div>
