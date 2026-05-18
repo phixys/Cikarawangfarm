@@ -7,7 +7,7 @@ export default function HeroSection() {
       {/* Background image — replace /hero-bg.jpg with your real asset */}
       <div className="absolute inset-0 bg-gray-700">
         <Image
-          src="/header.png"
+          src="/Header.png"
           alt="Cikarawang Farm background"
           fill
           className="object-cover"

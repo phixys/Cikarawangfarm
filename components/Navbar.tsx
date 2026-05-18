@@ -103,7 +103,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <Image
-            src="/logo.png"
+            src="/Logo.png"
             alt="Cikarawang Farm Logo"
             width={36}
             height={36}
