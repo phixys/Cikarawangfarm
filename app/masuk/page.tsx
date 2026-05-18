@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Leaf, ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -21,6 +22,7 @@ function GoogleLogo() {
    MAIN PAGE
 ───────────────────────────────────────── */
 export default function MasukPage() {
+  const router = useRouter(); // 🟢 Menggunakan router dari Next.js agar perpindahan mulus
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState('');
@@ -29,16 +31,30 @@ export default function MasukPage() {
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState('');
 
-  // 1. PENJAGA HALAMAN: Jika sudah login, langsung tendang ke beranda!
+  // 1. PENJAGA HALAMAN: Jika sudah login, cek role dan arahkan otomatis
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (session?.user) {
-        window.location.href = '/'; 
+        // Cek rolenya apa jika sudah login
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileData?.role === 'admin') {
+          router.push('/admin/pesanan');
+        } else if (profileData?.role === 'owner') {
+          router.push('/owner/finance');
+        } else {
+          router.push('/'); 
+        }
       }
     };
     checkSession();
-  }, []);
+  }, [router]);
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -78,22 +94,20 @@ export default function MasukPage() {
 
       if (profileError) {
         console.error('Gagal mengambil role:', profileError);
-        // Jika gagal ambil role, paksa pindah ke beranda
-        window.location.href = '/';
+        router.push('/');
         return;
       }
 
-      // 3. Arahkan (Redirect) sesuai Role
+      // 3. Arahkan (Redirect) sesuai Role secara mulus
       const userRole = profileData?.role;
 
       setTimeout(() => {
         if (userRole === 'admin') {
-          // Akan pindah ke halaman admin (pastikan foldernya sudah ada)
-          window.location.href = '/admin/stock'; 
+          router.push('/admin/pesanan'); // 🟢 Arahkan ke menu kelola pesanan admin
         } else if (userRole === 'owner') {
-          window.location.href = '/owner/finance';
+          router.push('/owner/finance'); // Sesuai dengan folder lamamu
         } else {
-          window.location.href = '/'; 
+          router.push('/'); 
         }
       }, 500);
 
@@ -105,7 +119,7 @@ export default function MasukPage() {
     }
   };
 
-const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async () => {
     try {
       setLoading(true);
       setError('');
@@ -113,7 +127,6 @@ const handleGoogleLogin = async () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // 🟢 UBAH BARIS INI: Hapus tulisan /auth/callback
           redirectTo: `${window.location.origin}/` 
         }
       });
@@ -260,7 +273,6 @@ const handleGoogleLogin = async () => {
               <div className="flex-1 h-px bg-gray-200" />
             </div>
 
-            {/* 🟢 TOMBOL GOOGLE YANG SUDAH DIPERBARUI */}
             <button 
               type="button"
               onClick={handleGoogleLogin}

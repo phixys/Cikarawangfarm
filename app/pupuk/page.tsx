@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import {
   CheckCircle2,
   Truck,
@@ -9,16 +11,53 @@ import {
   Minus,
   Plus,
   ShieldCheck,
+  Package,
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────
    MAIN PAGE
 ───────────────────────────────────────── */
 export default function PupukPage() {
+  const router = useRouter();
+  
+  // 🟢 State Stok Diubah menjadi Dinamis
+  const [stock, setStock] = useState(0); 
   const [qty, setQty] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // 🟢 Menarik Data Stok dari Database Supabase
+  useEffect(() => {
+    const fetchStokPupuk = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('stok_pupuk')
+          .select('jumlah')
+          .eq('id', 1)
+          .single();
+        
+        if (error) throw error;
+        if (data) setStock(data.jumlah);
+      } catch (err) {
+        console.error('Gagal menarik stok dari database:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStokPupuk();
+  }, []);
+
+  // 🟢 Logika validasi: Tidak bisa kurang dari 1, dan tidak bisa lebih dari stok
   const decrement = () => setQty((q) => Math.max(1, q - 1));
-  const increment = () => setQty((q) => q + 1);
+  const increment = () => setQty((q) => (q < stock ? q + 1 : q));
+
+  const handlePesanSekarang = () => {
+    if (qty > stock) {
+      alert('Maaf, jumlah pesanan melebihi stok yang tersedia.');
+      return;
+    }
+    router.push(`/pesan-pupuk?jumlah=${qty}`);
+  };
 
   const features = [
     '100% Organik & Alami',
@@ -67,7 +106,7 @@ export default function PupukPage() {
             {/* Left — Image */}
             <div className="w-full rounded-xl overflow-hidden bg-[#6B8E73] aspect-[4/5] relative flex items-center justify-center">
               <Image
-                src="/pupuk.png"
+                src="/Pupuk.png"
                 alt="Pupuk Organik Kotoran Domba"
                 fill
                 className="object-cover"
@@ -84,7 +123,7 @@ export default function PupukPage() {
               <ul className="flex flex-col gap-3 mb-5">
                 {features.map((f) => (
                   <li key={f} className="flex items-center gap-2.5">
-                    <CheckCircle2 size={18} className="text-gray-700 shrink-0" strokeWidth={2} />
+                    <CheckCircle2 size={18} className="text-[#2D6A4F] shrink-0" strokeWidth={2} />
                     <span className="text-[14px] text-gray-700">{f}</span>
                   </li>
                 ))}
@@ -95,37 +134,58 @@ export default function PupukPage() {
                 Berat: 30 kg - 35 kg per Karung
               </p>
 
-              {/* Price */}
-              <p className="text-[#2D6A4F] text-[2rem] font-bold leading-none mb-6">
-                Rp 10.000 / Karung
-              </p>
+              {/* Price & 🟢 INDIKATOR STOK DINAMIS */}
+              <div className="flex items-center gap-4 mb-6">
+                <p className="text-[#2D6A4F] text-[2rem] font-bold leading-none">
+                  Rp 10.000 <span className="text-lg font-normal text-gray-500">/ Karung</span>
+                </p>
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                  isLoading ? 'bg-gray-100 text-gray-500' : 
+                  stock > 0 ? 'bg-green-100 text-[#2D6A4F]' : 'bg-red-100 text-red-600'
+                }`}>
+                  <Package size={16} />
+                  {isLoading ? 'Mengecek Stok...' : stock > 0 ? `Sisa Stok: ${stock}` : 'Stok Habis'}
+                </div>
+              </div>
 
               {/* Quantity selector */}
               <div className="flex items-center gap-0 mb-6 w-fit">
                 <div className="flex items-center border border-gray-300 rounded-full overflow-hidden">
                   <button
                     onClick={decrement}
-                    className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors duration-150"
+                    disabled={qty <= 1 || stock === 0 || isLoading}
+                    className={`w-10 h-10 flex items-center justify-center transition-colors duration-150 ${qty <= 1 || stock === 0 || isLoading ? 'text-gray-300 cursor-not-allowed bg-gray-50' : 'text-gray-600 hover:bg-gray-100'}`}
                     aria-label="Kurangi"
                   >
                     <Minus size={15} strokeWidth={2.5} />
                   </button>
                   <span className="w-10 text-center text-[14px] font-semibold text-gray-900 border-x border-gray-300 h-10 flex items-center justify-center">
-                    {qty}
+                    {stock === 0 || isLoading ? 0 : qty}
                   </span>
                   <button
                     onClick={increment}
-                    className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors duration-150"
+                    disabled={qty >= stock || stock === 0 || isLoading}
+                    className={`w-10 h-10 flex items-center justify-center transition-colors duration-150 ${qty >= stock || stock === 0 || isLoading ? 'text-gray-300 cursor-not-allowed bg-gray-50' : 'text-gray-600 hover:bg-gray-100'}`}
                     aria-label="Tambah"
                   >
                     <Plus size={15} strokeWidth={2.5} />
                   </button>
                 </div>
+                {qty >= stock && stock > 0 && !isLoading && (
+                  <span className="ml-3 text-xs text-amber-600 font-medium">Batas maksimal stok</span>
+                )}
               </div>
 
-              {/* CTA */}
-              <button className="w-full bg-[#40916C] text-white font-semibold text-[14.5px] py-3.5 rounded-full hover:bg-[#2D6A4F] transition-colors duration-150">
-                Pesan Sekarang
+              {/* CTA Tombol */}
+              <button 
+                onClick={handlePesanSekarang}
+                disabled={stock === 0 || isLoading}
+                className={`w-full font-semibold text-[14.5px] py-3.5 rounded-full transition-colors duration-150 ${
+                  isLoading ? 'bg-gray-300 text-gray-500 cursor-not-allowed' :
+                  stock > 0 ? 'bg-[#2D6A4F] text-white hover:bg-[#1B4332]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {isLoading ? 'Menunggu Data...' : stock > 0 ? 'Pesan Sekarang' : 'Maaf, Stok Habis'}
               </button>
             </div>
           </div>

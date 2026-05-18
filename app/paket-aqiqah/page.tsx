@@ -1,6 +1,8 @@
 'use client';
 
 import { Check, Star } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link'; // 🟢 Tambahan import Link
 
 /* ─────────────────────────────────────────
    DATA
@@ -8,35 +10,43 @@ import { Check, Star } from 'lucide-react';
 const packages = [
   {
     key: 'barokah',
-    topBg: 'bg-gradient-to-br from-[#40916C] to-[#2D6A4F]',
+    // 🟢 Ganti background warna jadi path gambar
+    imgSrc: '/paket-barokah.jpg', 
     badge: 'Tersedia',
-    badgeClass: 'bg-white text-[#40916C]',
+    badgeClass: 'bg-white text-[#40916C] shadow-sm',
     title: 'Paket Aqiqah Barokah',
     price: 'Rp 2.500.000',
     priceClass: 'text-[#2D6A4F]',
-    features: ['40–50 porsi nasi', 'Berat domba 25–30 kg', 'Bisa diantar (Sekitar Bogor)'],
+    features: ['50 Box Nasi Lengkap', 
+      'Isi: Nasi, 3 Sate, Gulai, Acar, Sambal Kentang',
+      'Gratis Sertifikat',
+      'Bisa diantar (Area Bogor)'],
     btnClass: 'bg-[#40916C] hover:bg-[#2D6A4F] text-white',
   },
   {
     key: 'premium',
-    topBg: 'bg-gradient-to-br from-[#1B4332] to-[#144125]',
+    imgSrc: '/paket-premium.jpg',
     badge: 'Terpopuler',
-    badgeClass: 'bg-yellow-100 text-yellow-800',
+    badgeClass: 'bg-yellow-100 text-yellow-800 shadow-sm',
     title: 'Paket Aqiqah Premium',
-    price: 'Rp 3.800.000',
-    priceClass: 'text-[#40916C]',
-    features: ['60–70 porsi nasi', 'Berat domba 35–40 kg', 'Bisa diantar (Sekitar Bogor)'],
-    btnClass: 'bg-[#2D6A4F] hover:bg-[#1B4332] text-white',
+    price: 'Rp 3.700.000',
+    priceClass: 'text-[#2D6A4F]',
+    features: [
+      '75 Box Nasi Lengkap', 
+      'Isi: Nasi, 3 Sate, Gulai, Acar, Sambal Kentang',
+      'Gratis Sertifikat',
+      'Bisa diantar (Area Bogor)'],
+    btnClass: 'bg-[#40916C] hover:bg-[#2D6A4F] text-white',
   },
   {
     key: 'eksklusif',
-    topBg: 'bg-gradient-to-br from-[#74C69D] to-[#4C9A78]',
+    imgSrc: '/paket-eksklusif.jpg',
     badge: 'Baru',
-    badgeClass: 'bg-white text-[#2D6A4F]',
+    badgeClass: 'bg-white text-[#2D6A4F] shadow-sm',
     title: 'Paket Aqiqah Eksklusif',
-    price: 'Rp 5.200.000',
+    price: 'Rp 4.900.000',
     priceClass: 'text-[#2D6A4F]',
-    features: ['90–100 porsi nasi', 'Berat domba 45–50 kg', 'Bisa diantar (Sekitar Bogor)'],
+    features: ['100 Box Nasi Lengkap', 'Isi: Nasi, 3 Sate, Gulai, Acar, Sambal Kentang', 'Gratis Sertifikat', 'Bisa diantar (Area Bogor)'],
     btnClass: 'bg-[#40916C] hover:bg-[#2D6A4F] text-white',
   },
 ];
@@ -67,8 +77,6 @@ const testimonials = [
 ───────────────────────────────────────── */
 export default function PaketAqiqahPage() {
   return (
-    // Saya hapus min-h-screen flex flex-col karena sudah diurus layout.tsx
-    // Tinggal sisakan warna background khususnya saja
     <div className="bg-[#F0FFF4] w-full">
       {/* ── Hero ── */}
       <section className="bg-[#F0FFF4] pt-20 pb-14 px-6 text-center">
@@ -91,10 +99,19 @@ export default function PaketAqiqahPage() {
               key={pkg.key}
               className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200 flex flex-col"
             >
-              {/* Top colored block */}
-              <div className={`h-40 w-full relative ${pkg.topBg}`}>
+              {/* 🟢 Area Gambar Pengganti Warna Solid */}
+              <div className="h-48 w-full relative bg-gray-100">
+                <Image 
+                  src={pkg.imgSrc} 
+                  alt={pkg.title}
+                  fill
+                  className="object-cover"
+                />
+                {/* Overlay gradasi tipis agar badge tetap terbaca jelas meski gambarnya terang */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent" />
+                
                 <span
-                  className={`absolute top-4 right-4 text-xs font-semibold px-3 py-1 rounded-full ${pkg.badgeClass}`}
+                  className={`absolute top-4 right-4 z-10 text-xs font-semibold px-3 py-1 rounded-full ${pkg.badgeClass}`}
                 >
                   {pkg.badge}
                 </span>
@@ -115,12 +132,13 @@ export default function PaketAqiqahPage() {
                   ))}
                 </ul>
 
-                {/* CTA */}
-                <button
-                  className={`w-full rounded-full py-3 font-semibold text-[14px] transition-colors duration-150 mt-auto ${pkg.btnClass}`}
+                {/* 🟢 CTA DIUBAH JADI LINK */}
+                <Link
+                  href={`/pesan-aqiqah?paket=${pkg.key}`}
+                  className={`w-full block text-center rounded-full py-3 font-semibold text-[14px] transition-colors duration-150 mt-auto ${pkg.btnClass}`}
                 >
                   Pesan Sekarang
-                </button>
+                </Link>
               </div>
             </div>
           ))}

@@ -11,7 +11,7 @@ const navLinks = [
   { label: 'Katalog Ternak', href: '/katalog-ternak' },
   { label: 'Paket Aqiqah', href: '/paket-aqiqah' },
   { label: 'Pupuk', href: '/pupuk' },
-  { label: 'Status Pesanan', href: '/status-pesanan' },
+  { label: 'Status Pesanan', href: '/status' },
 ];
 
 export default function Navbar() {
@@ -30,7 +30,6 @@ export default function Navbar() {
 
         if (session?.user) {
           setUser(session.user);
-          // Fetch profile untuk full_name
           const { data } = await supabase
             .from('profiles')
             .select('full_name')
@@ -41,7 +40,6 @@ export default function Navbar() {
             setFullName(data.full_name);
           }
         } else {
-          // Jika tidak ada session, pastikan state kosong
           setUser(null);
           setFullName('');
         }
@@ -54,7 +52,6 @@ export default function Navbar() {
 
     fetchUser();
 
-    // Listener otomatis: Memantau jika user Login atau Logout
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -65,23 +62,17 @@ export default function Navbar() {
       }
     });
 
-    // Bersihkan listener saat komponen dilepas
     return () => {
       subscription.unsubscribe();
     };
   }, [router]);
 
-  // Fungsi Logout yang diperbarui
   const handleLogout = async () => {
     try {
       setLoading(true);
       await supabase.auth.signOut();
-      
-      // Kosongkan state secara manual
       setUser(null);
       setFullName('');
-      
-      // Segarkan cache dan arahkan ke beranda
       router.refresh();
       router.push('/');
     } catch (error) {
@@ -91,12 +82,7 @@ export default function Navbar() {
     }
   };
 
-  // Extract first name from full name
-  const getFirstName = (name: string) => {
-    return name.split(' ')[0];
-  };
-
-  // Get initial from first name
+  const getFirstName = (name: string) => name.split(' ')[0];
   const getInitial = (name: string) => {
     const firstName = getFirstName(name);
     return firstName.charAt(0).toUpperCase() || 'U';
@@ -104,6 +90,12 @@ export default function Navbar() {
 
   const firstName = fullName ? getFirstName(fullName) : '';
   const initial = fullName ? getInitial(fullName) : 'U';
+
+  // 🟢 LOGIKA PENYEMBUNYI NAVBAR:
+  // Jika URL sedang berada di /admin atau /owner, jangan tampilkan Navbar hijau ini
+  if (pathname.startsWith('/admin') || pathname.startsWith('/owner')) {
+    return null; 
+  }
 
   return (
     <nav className="bg-[#2D6A4F] sticky top-0 z-50 w-full">
@@ -125,28 +117,30 @@ export default function Navbar() {
         {/* Nav Links */}
         <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
-            const isActive = pathname === link.href;
+            const isActive = link.href === '/' 
+              ? pathname === '/' 
+              : pathname.startsWith(link.href);
+
             return (
-            <Link
-              key={link.label}
-              href={link.href}
-              className={`
-                text-[13px] font-medium px-4 py-1.5 rounded-full transition-colors duration-150
-                ${isActive
-                  ? 'bg-white/20 text-white'
-                  : 'text-white/80 hover:text-white hover:bg-white/10'}
-              `}
-            >
-              {link.label}
-            </Link>
-          );
+              <Link
+                key={link.label}
+                href={link.href}
+                className={`
+                  text-[13px] font-medium px-4 py-1.5 rounded-full transition-colors duration-150
+                  ${isActive
+                    ? 'bg-white/20 text-white' 
+                    : 'text-white/80 hover:text-white hover:bg-white/10'}
+                `}
+              >
+                {link.label}
+              </Link>
+            );
           })}
         </div>
 
         {/* Auth Section */}
         <div className="flex items-center gap-3 shrink-0">
           {!loading && user ? (
-            // User sudah login
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">
                 {initial}
@@ -163,7 +157,6 @@ export default function Navbar() {
               </button>
             </div>
           ) : !loading && !user ? (
-            // Belum login
             <div className="flex items-center gap-2">
               <Link
                 href="/masuk"
