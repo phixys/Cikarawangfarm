@@ -1,3 +1,6 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -9,6 +12,13 @@ const navLinks = [
 ];
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  // Sembunyikan Footer di halaman masuk dan daftar
+  if (pathname === '/masuk' || pathname === '/daftar') {
+    return null;
+  }
+
   return (
     <footer className="bg-primary-dark text-white">
       <div className="max-w-[1200px] mx-auto px-6 py-12">

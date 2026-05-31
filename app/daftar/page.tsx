@@ -7,12 +7,12 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  Leaf,
   Lock,
   Mail,
   User,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getSiteUrl } from '@/lib/siteUrl';
 
 export default function DaftarPage() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function DaftarPage() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        window.location.href = '/'; 
+        router.push('/');
       }
     };
     checkSession();
@@ -44,7 +44,7 @@ export default function DaftarPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/` 
+          redirectTo: `${getSiteUrl()}/`,
         }
       });
 
@@ -94,25 +94,26 @@ export default function DaftarPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F0FFF4] flex items-center justify-center px-4 py-6 sm:px-6 font-poppins">
-      {/* Tombol Kembali */}
-      <div className="absolute top-6 left-4 sm:left-6">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 sm:px-6 bg-[#F0FFF4] font-poppins">
+      <div className="max-w-[1000px] w-full">
+
         <Link
           href="/"
-          className="inline-flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-sm text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
+          className="inline-flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-sm text-gray-700 hover:text-[#2D6A4F] text-[13.5px] font-medium mb-6 transition-colors duration-150"
         >
           <span>←</span> Kembali ke Beranda
         </Link>
-      </div>
 
-      <section className="relative w-full max-w-[1000px] mt-16 md:mt-0 bg-white rounded-[2rem] shadow-xl overflow-hidden flex flex-col md:flex-row">
-        {/* Panel Kiri (Hijau) */}
-        <div className="w-full md:w-5/12 bg-[#2D6A4F] p-10 md:p-12 flex flex-col justify-between">
+        <section className="relative w-full bg-white rounded-[2rem] shadow-xl overflow-hidden flex flex-col md:flex-row min-h-[660px]">
+          {/* Panel Kiri (Hijau) */}
+          <div className="w-full md:w-5/12 bg-[#2D6A4F] p-10 md:p-12 flex flex-col justify-between h-full">
           <div>
             <div className="inline-flex items-center gap-3 mb-10">
-              <span className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-white">
-                <Leaf size={20} />
-              </span>
+              <img
+                src="/logo.png"
+                alt="Cikarawang Farm Logo"
+                className="w-10 h-10 rounded-full object-cover bg-white p-0.5 shrink-0"
+              />
               <span className="text-white font-bold text-[15px]">Cikarawang Farm</span>
             </div>
             <h1 className="text-white text-4xl font-bold leading-tight mb-6">
@@ -129,8 +130,8 @@ export default function DaftarPage() {
           </div>
         </div>
 
-        {/* Panel Kanan (Form) */}
-        <div className="w-full md:w-7/12 bg-white p-8 md:p-14">
+          {/* Panel Kanan (Form) */}
+          <div className="w-full md:w-7/12 bg-white p-8 md:p-14 flex flex-col justify-center">
           <h2 className="text-[#2D6A4F] text-3xl font-bold mb-2">Daftar Akun Baru</h2>
           <p className="text-gray-500 text-sm mb-10">Lengkapi data di bawah ini untuk memulai perjalanan Anda.</p>
 
@@ -192,7 +193,8 @@ export default function DaftarPage() {
             Sudah punya akun? <Link href="/masuk" className="text-[#2D6A4F] font-bold hover:underline">Masuk sekarang</Link>
           </p>
         </div>
-      </section>
-    </main>
+        </section>
+      </div>
+    </div>
   );
 }

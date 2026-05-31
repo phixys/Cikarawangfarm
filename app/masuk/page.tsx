@@ -3,8 +3,9 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Leaf, ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getSiteUrl } from '@/lib/siteUrl';
 
 /* ─── Google SVG Logo ─── */
 function GoogleLogo() {
@@ -38,18 +39,22 @@ export default function MasukPage() {
       
       if (session?.user) {
         // Cek rolenya apa jika sudah login
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', session.user.id)
           .single();
 
-        if (profileData?.role === 'admin') {
-          router.push('/admin/pesanan');
-        } else if (profileData?.role === 'owner') {
-          router.push('/owner/finance');
+        // Jika query gagal atau data kosong, jangan redirect ke '/'
+        if (profileError || !profileData) {
+          console.warn('Tidak bisa membaca role profile:', profileError?.message);
+          return; // Biarkan user tetap di halaman masuk, tidak redirect ke mana-mana
+        }
+
+        if (profileData.role === 'owner') {
+          router.push('/owner');
         } else {
-          router.push('/'); 
+          router.push('/admin/pesanan');
         }
       }
     };
@@ -98,16 +103,21 @@ export default function MasukPage() {
         return;
       }
 
-      // 3. Arahkan (Redirect) sesuai Role secara mulus
+      // 3. Catat waktu login terakhir ke tabel profil_karyawan
+      await supabase
+        .from('profil_karyawan')
+        .update({ terakhir_login: new Date().toISOString() })
+        .eq('id', authData.user.id);
+      // Jika tabel/kolom belum ada, error diabaikan agar redirect tetap berjalan
+
+      // 4. Arahkan (Redirect) sesuai Role secara mulus
       const userRole = profileData?.role;
 
       setTimeout(() => {
-        if (userRole === 'admin') {
-          router.push('/admin/pesanan'); // 🟢 Arahkan ke menu kelola pesanan admin
-        } else if (userRole === 'owner') {
-          router.push('/owner/finance'); // Sesuai dengan folder lamamu
+        if (userRole === 'owner') {
+          router.push('/owner'); // Arahkan ke dashboard owner
         } else {
-          router.push('/'); 
+          router.push('/admin/pesanan'); // Arahkan ke menu kelola pesanan admin
         }
       }, 500);
 
@@ -127,7 +137,7 @@ export default function MasukPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/` 
+          redirectTo: `${getSiteUrl()}/masuk`, // Balik ke /masuk agar useEffect bisa cek role
         }
       });
 
@@ -153,14 +163,16 @@ export default function MasukPage() {
           Kembali ke Beranda
         </Link>
 
-        <div className="w-full bg-white rounded-[2rem] shadow-xl flex flex-col md:flex-row overflow-hidden">
+        <div className="w-full bg-white rounded-[2rem] shadow-xl flex flex-col md:flex-row overflow-hidden min-h-[660px]">
           {/* ── LEFT PANEL ── */}
-          <div className="w-full md:w-5/12 bg-[#2D6A4F] p-10 flex flex-col justify-between">
+          <div className="w-full md:w-5/12 bg-[#2D6A4F] p-10 flex flex-col justify-between h-full">
             <div>
               <div className="flex items-center gap-3 mb-12">
-                <div className="w-10 h-10 bg-white/15 rounded-full flex items-center justify-center">
-                  <Leaf size={20} className="text-white" strokeWidth={2} />
-                </div>
+                <img
+                  src="/logo.png"
+                  alt="Cikarawang Farm Logo"
+                  className="w-10 h-10 rounded-full object-cover bg-white p-0.5 shrink-0"
+                />
                 <span className="text-white font-bold text-[16px]">Cikarawang Farm</span>
               </div>
               <h2 className="text-white text-[2rem] font-bold leading-snug mb-4">
@@ -183,7 +195,7 @@ export default function MasukPage() {
           </div>
 
           {/* ── RIGHT PANEL ── */}
-          <div className="w-full md:w-7/12 bg-white p-8 md:p-14">
+          <div className="w-full md:w-7/12 bg-white p-8 md:p-14 flex flex-col justify-center">
             <h1 className="text-[#2D6A4F] text-3xl font-bold mb-2">Selamat Datang!</h1>
             <p className="text-gray-500 text-[13.5px] mb-8">
               Silakan masukkan detail akun Anda untuk melanjutkan.

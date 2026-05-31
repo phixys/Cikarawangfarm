@@ -2,35 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ClipboardList, Library, LogOut, UserCircle, Package, TrendingUp, Settings, Crown, AlertTriangle } from 'lucide-react';
+import { LogOut, TrendingUp, Settings, Crown, AlertTriangle, Users } from 'lucide-react';
 
-type UserRole = 'admin' | 'owner' | 'pelanggan' | null;
+const navLinks = [
+  { name: 'Dashboard Owner', href: '/owner', icon: TrendingUp },
+  { name: 'Kelola Karyawan', href: '/owner/karyawan', icon: Users },
+  { name: 'Pengaturan', href: '/owner/pengaturan', icon: Settings },
+];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function OwnerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [role, setRole] = useState<UserRole>(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-
-  // ─── Ambil role dari tabel profiles berdasarkan session aktif ───
-  useEffect(() => {
-    const fetchRole = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-
-      setRole((profile?.role as UserRole) ?? 'admin');
-    };
-
-    fetchRole();
-  }, []);
 
   const handleLogout = () => {
     setIsLogoutModalOpen(true);
@@ -41,44 +26,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push('/masuk');
   };
 
-  // ─── Pisahkan Array Menu ───
-  const adminLinks = [
-    { name: 'Kelola Pesanan', href: '/admin/pesanan', icon: ClipboardList },
-    { name: 'Katalog Ternak', href: '/admin/katalog', icon: Library },
-    { name: 'Stok Pupuk', href: '/admin/stok-pupuk', icon: Package },
-  ];
-
-  const ownerLinks = [
-    { name: 'Dashboard Owner', href: '/owner', icon: TrendingUp },
-    { name: 'Pengaturan', href: '/admin/pengaturan', icon: Settings },
-  ];
-
-  // ─── Filter Menu ───
-  const navLinks = role === 'owner' ? ownerLinks : adminLinks;
-
-  // ─── Label sapaan dinamis ───
-  const greeting = "Halo, " + (role === 'owner' ? 'Owner' : 'Admin');
-
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
 
+            {/* Kiri: Logo + Judul + Desktop Nav */}
             <div className="flex items-center gap-8">
               <div className="flex-shrink-0 flex items-center gap-2.5">
                 <div className="w-9 h-9 bg-[#2D6A4F] rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm">
                   CF
                 </div>
                 <span className="font-bold text-gray-900 text-lg hidden sm:block">
-                  {role === 'owner' ? 'Owner Panel' : 'Admin Panel'}
+                  Owner Panel
                 </span>
               </div>
 
               {/* Desktop Nav */}
               <div className="hidden sm:flex sm:space-x-1">
                 {navLinks.map((link) => {
-                  const isActive = pathname === link.href || (link.href !== '/owner' && pathname.startsWith(link.href));
+                  const isActive =
+                    link.href === '/owner'
+                      ? pathname === '/owner'
+                      : pathname.startsWith(link.href);
                   return (
                     <Link
                       key={link.name}
@@ -97,18 +68,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             </div>
 
-            {/* Pojok kanan: Profil + Logout */}
+            {/* Kanan: Profil Owner + Logout */}
             <div className="flex items-center gap-3">
-              <div className={`flex items-center gap-2 text-sm font-semibold px-3 py-1.5 rounded-full border ${
-                role === 'owner'
-                  ? 'text-amber-700 bg-amber-50 border-amber-200'
-                  : 'text-gray-700 bg-gray-50 border-gray-100'
-              }`}>
-                {role === 'owner'
-                  ? <Crown size={16} className="text-amber-500" />
-                  : <UserCircle size={18} className="text-[#2D6A4F]" />
-                }
-                <span className="hidden sm:block">{greeting}</span>
+              <div className="flex items-center gap-2 text-sm font-semibold px-3 py-1.5 rounded-full border text-amber-700 bg-amber-50 border-amber-200">
+                <Crown size={16} className="text-amber-500" />
+                <span className="hidden sm:block">Halo, Owner</span>
               </div>
 
               <button
@@ -127,7 +91,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Mobile Nav */}
         <div className="sm:hidden flex border-t border-gray-100 p-2 overflow-x-auto gap-2 bg-white">
           {navLinks.map((link) => {
-            const isActive = pathname === link.href || (link.href !== '/owner' && pathname.startsWith(link.href));
+            const isActive =
+              link.href === '/owner'
+                ? pathname === '/owner'
+                : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.name}

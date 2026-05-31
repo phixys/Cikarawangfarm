@@ -91,10 +91,14 @@ export default function Navbar() {
   const firstName = fullName ? getFirstName(fullName) : '';
   const initial = fullName ? getInitial(fullName) : 'U';
 
-  // 🟢 LOGIKA PENYEMBUNYI NAVBAR:
-  // Jika URL sedang berada di /admin atau /owner, jangan tampilkan Navbar hijau ini
-  if (pathname.startsWith('/admin') || pathname.startsWith('/owner')) {
-    return null; 
+  // Sembunyikan Navbar di halaman admin, owner, masuk, dan daftar
+  if (
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/owner') ||
+    pathname === '/masuk' ||
+    pathname === '/daftar'
+  ) {
+    return null;
   }
 
   return (
