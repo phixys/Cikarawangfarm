@@ -39,9 +39,9 @@ export default function MasukPage() {
 
       if (!session?.user) return;
 
-      // Ambil role dari profil_karyawan (sumber kebenaran, sama dengan middleware)
+      // Ambil role dari profiles
       const { data: karyawanData } = await supabase
-        .from('profil_karyawan')
+        .from('profiles')
         .select('role')
         .eq('id', session.user.id)
         .single();
@@ -58,8 +58,8 @@ export default function MasukPage() {
     checkSession();
   }, [router]);
 
-  const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // INI WAJIB ADA DI BARIS PERTAMA
     setError('');
     setInfo('');
 
@@ -68,87 +68,38 @@ export default function MasukPage() {
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // Delegasikan login ke server (Route Handler) agar Cookie di-set dengan sempurna
+      const response = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (signInError) {
-        setError(signInError.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Login gagal:", data.error);
+        setError(data.error || 'Terjadi kesalahan saat masuk');
+        setLoading(false);
         return;
       }
 
-      if (!authData?.session) {
-        setError('Login berhasil, tetapi sesi tidak terbentuk. Coba muat ulang halaman.');
-        return;
+      setInfo('Login berhasil. Mengalihkan...');
+
+      // 3. Pengalihan Absolut berdasarkan role yang dikembalikan server
+      if (data.role === 'owner') {
+        window.location.href = '/owner';
+      } else if (data.role === 'admin') {
+        window.location.href = '/admin/pesanan';
+      } else {
+        window.location.href = '/';
       }
-
-      setInfo('Login berhasil. Memeriksa hak akses...');
-
-      // 2. Ambil Role pengguna — coba dari profil_karyawan, fallback ke profiles
-      let userRole: string | null = null;
-
-      try {
-        const { data: karyawanData, error: karyawanError } = await supabase
-          .from('profil_karyawan')
-          .select('role')
-          .eq('id', authData.user.id)
-          .single();
-
-        if (!karyawanError && karyawanData?.role) {
-          userRole = karyawanData.role;
-        } else {
-          // Fallback: coba dari tabel profiles
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', authData.user.id)
-            .single();
-
-          if (profileError || !profileData?.role) {
-            // Kedua sumber gagal — beri tahu user dan jangan redirect
-            setError(
-              'Gagal memuat profil. Silakan refresh atau gunakan tombol Panel di Navbar untuk masuk ke Panel.'
-            );
-            setInfo('');
-            return;
-          }
-
-          userRole = profileData.role;
-        }
-      } catch (roleErr) {
-        console.error('Error saat fetch role:', roleErr);
-        setError(
-          'Gagal memuat profil. Silakan refresh atau gunakan tombol Panel di Navbar untuk masuk ke Panel.'
-        );
-        setInfo('');
-        return;
-      }
-
-      // 3. Catat waktu login terakhir ke tabel profil_karyawan
-      await supabase
-        .from('profil_karyawan')
-        .update({ terakhir_login: new Date().toISOString() })
-        .eq('id', authData.user.id);
-      // Jika tabel/kolom belum ada, error diabaikan agar redirect tetap berjalan
-
-      // 4. Arahkan (Redirect) sesuai Role secara mulus
-      setTimeout(() => {
-        if (userRole === 'owner') {
-          router.push('/owner');
-        } else if (userRole === 'admin') {
-          router.push('/admin/pesanan');
-        } else {
-          router.push('/');
-        }
-      }, 500);
 
     } catch (err: any) {
-      console.error('Login error', err);
-      setError(err?.message ?? 'Terjadi kesalahan saat masuk');
-    } finally {
+      console.error('Login error:', err);
+      setError(err?.message ?? 'Terjadi kesalahan jaringan');
       setLoading(false);
     }
   };
@@ -161,7 +112,7 @@ export default function MasukPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${getSiteUrl()}/masuk`, // Balik ke /masuk agar useEffect bisa cek role
+          redirectTo: `${window.location.origin}/auth/callback`,
         }
       });
 
@@ -225,7 +176,7 @@ export default function MasukPage() {
               Silakan masukkan detail akun Anda untuk melanjutkan.
             </p>
 
-            <form onSubmit={handleSignIn} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-5">
               {error && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                   {error}

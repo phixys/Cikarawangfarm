@@ -19,7 +19,6 @@ export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [fullName, setFullName] = useState('');
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,19 +40,9 @@ export default function Navbar() {
           if (profileData?.full_name) {
             setFullName(profileData.full_name);
           }
-
-          // Ambil role dari tabel profil_karyawan
-          const { data: roleData } = await supabase
-            .from('profil_karyawan')
-            .select('role')
-            .eq('id', authUser.id)
-            .single();
-
-          setUserRole(roleData?.role ?? null);
         } else {
           setUser(null);
           setFullName('');
-          setUserRole(null);
         }
       } catch (err) {
         console.error('Error fetching user:', err);
@@ -68,7 +57,6 @@ export default function Navbar() {
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setFullName('');
-        setUserRole(null);
         router.refresh();
       } else if (event === 'SIGNED_IN') {
         fetchUser();
@@ -165,24 +153,6 @@ export default function Navbar() {
               <span className="text-white text-[13px] font-medium max-w-[100px] truncate hidden sm:block">
                 {firstName || 'User'}
               </span>
-
-              {/* ── Tombol Panel VIP ── */}
-              {userRole === 'owner' && (
-                <Link
-                  href="/owner"
-                  className="text-[13px] font-bold text-[#2D6A4F] bg-white px-3 py-1.5 rounded-full hover:bg-[#E8F5E9] transition-colors duration-150 whitespace-nowrap"
-                >
-                  👑 Panel Owner
-                </Link>
-              )}
-              {userRole === 'admin' && (
-                <Link
-                  href="/admin/pesanan"
-                  className="text-[13px] font-bold text-[#2D6A4F] bg-white px-3 py-1.5 rounded-full hover:bg-[#E8F5E9] transition-colors duration-150 whitespace-nowrap"
-                >
-                  🛡️ Panel Admin
-                </Link>
-              )}
 
               <button
                 onClick={handleLogout}

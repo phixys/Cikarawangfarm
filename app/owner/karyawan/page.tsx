@@ -20,7 +20,7 @@ type Role = 'owner' | 'admin' | 'pelanggan';
 
 interface Karyawan {
   id: string;
-  nama: string;
+  full_name: string;
   role: Role;
   terakhir_login: string | null;
 }
@@ -91,11 +91,11 @@ export default function KelollaKaryawanPage() {
       } = await supabase.auth.getSession();
       setCurrentUserId(session?.user?.id ?? null);
 
-      // Ambil semua profil_karyawan
+      // Ambil semua profiles
       const { data, error } = await supabase
-        .from('profil_karyawan')
-        .select('id, nama, role, terakhir_login')
-        .order('nama', { ascending: true });
+        .from('profiles')
+        .select('id, full_name, role, terakhir_login')
+        .order('full_name', { ascending: true });
 
       if (error) throw error;
       setKaryawan((data as Karyawan[]) ?? []);
@@ -122,7 +122,7 @@ export default function KelollaKaryawanPage() {
     setLoadingId(id);
     try {
       const { error } = await supabase
-        .from('profil_karyawan')
+        .from('profiles')
         .update({ role: roleBaru })
         .eq('id', id);
 
@@ -133,7 +133,7 @@ export default function KelollaKaryawanPage() {
         prev.map((k) => (k.id === id ? { ...k, role: roleBaru } : k))
       );
 
-      const nama = karyawan.find((k) => k.id === id)?.nama ?? 'Pengguna';
+      const nama = karyawan.find((k) => k.id === id)?.full_name ?? 'Pengguna';
       showAlert(`Role ${nama} berhasil diubah menjadi "${roleBaru}". ✅`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal mengubah role.';
@@ -271,7 +271,7 @@ export default function KelollaKaryawanPage() {
         {karyawan.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-gray-400">
             <Users size={40} className="opacity-30" />
-            <p className="text-sm font-medium">Belum ada data akun di tabel profil_karyawan.</p>
+            <p className="text-sm font-medium">Belum ada data akun di tabel profiles.</p>
           </div>
         ) : (
           <>
@@ -315,10 +315,10 @@ export default function KelollaKaryawanPage() {
                                   : 'bg-gray-400'
                               }`}
                             >
-                              {k.nama?.charAt(0)?.toUpperCase() ?? '?'}
+                              {k.full_name?.charAt(0)?.toUpperCase() ?? '?'}
                             </div>
                             <div>
-                              <p className="font-bold text-gray-900 text-sm">{k.nama ?? '—'}</p>
+                              <p className="font-bold text-gray-900 text-sm">{k.full_name ?? '—'}</p>
                               {isSelf && (
                                 <p className="text-[10px] font-semibold text-amber-600 bg-amber-100 inline-block px-1.5 py-0.5 rounded-md mt-0.5">
                                   Akun Anda
