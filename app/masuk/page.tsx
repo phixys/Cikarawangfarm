@@ -36,27 +36,24 @@ export default function MasukPage() {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        // Cek rolenya apa jika sudah login
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
 
-        // Jika query gagal atau data kosong, jangan redirect ke '/'
-        if (profileError || !profileData) {
-          console.warn('Tidak bisa membaca role profile:', profileError?.message);
-          return; // Biarkan user tetap di halaman masuk, tidak redirect ke mana-mana
-        }
+      if (!session?.user) return;
 
-        if (profileData.role === 'owner') {
-          router.push('/owner');
-        } else {
-          router.push('/admin/pesanan');
-        }
+      // Ambil role dari profil_karyawan (sumber kebenaran, sama dengan middleware)
+      const { data: karyawanData } = await supabase
+        .from('profil_karyawan')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      const role = karyawanData?.role;
+
+      if (role === 'owner') {
+        router.push('/owner');
+      } else if (role === 'admin') {
+        router.push('/admin/pesanan');
       }
+      // Jika role pelanggan/null → biarkan tetap di halaman masuk
     };
     checkSession();
   }, [router]);
@@ -90,16 +87,43 @@ export default function MasukPage() {
 
       setInfo('Login berhasil. Memeriksa hak akses...');
 
-      // 2. Ambil Role pengguna dari tabel profiles
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', authData.user.id)
-        .single();
+      // 2. Ambil Role pengguna — coba dari profil_karyawan, fallback ke profiles
+      let userRole: string | null = null;
 
-      if (profileError) {
-        console.error('Gagal mengambil role:', profileError);
-        router.push('/');
+      try {
+        const { data: karyawanData, error: karyawanError } = await supabase
+          .from('profil_karyawan')
+          .select('role')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (!karyawanError && karyawanData?.role) {
+          userRole = karyawanData.role;
+        } else {
+          // Fallback: coba dari tabel profiles
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', authData.user.id)
+            .single();
+
+          if (profileError || !profileData?.role) {
+            // Kedua sumber gagal — beri tahu user dan jangan redirect
+            setError(
+              'Gagal memuat profil. Silakan refresh atau gunakan tombol Panel di Navbar untuk masuk ke Panel.'
+            );
+            setInfo('');
+            return;
+          }
+
+          userRole = profileData.role;
+        }
+      } catch (roleErr) {
+        console.error('Error saat fetch role:', roleErr);
+        setError(
+          'Gagal memuat profil. Silakan refresh atau gunakan tombol Panel di Navbar untuk masuk ke Panel.'
+        );
+        setInfo('');
         return;
       }
 
@@ -111,13 +135,13 @@ export default function MasukPage() {
       // Jika tabel/kolom belum ada, error diabaikan agar redirect tetap berjalan
 
       // 4. Arahkan (Redirect) sesuai Role secara mulus
-      const userRole = profileData?.role;
-
       setTimeout(() => {
         if (userRole === 'owner') {
-          router.push('/owner'); // Arahkan ke dashboard owner
+          router.push('/owner');
+        } else if (userRole === 'admin') {
+          router.push('/admin/pesanan');
         } else {
-          router.push('/admin/pesanan'); // Arahkan ke menu kelola pesanan admin
+          router.push('/');
         }
       }, 500);
 

@@ -19,29 +19,41 @@ export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [fullName, setFullName] = useState('');
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        // Gunakan getUser() untuk memastikan token divalidasi ke server
+        const { data: { user: authUser } } = await supabase.auth.getUser();
 
-        if (session?.user) {
-          setUser(session.user);
-          const { data } = await supabase
+        if (authUser) {
+          setUser(authUser);
+
+          // Ambil nama tampilan dari tabel profiles
+          const { data: profileData } = await supabase
             .from('profiles')
             .select('full_name')
-            .eq('id', session.user.id)
+            .eq('id', authUser.id)
             .single();
 
-          if (data?.full_name) {
-            setFullName(data.full_name);
+          if (profileData?.full_name) {
+            setFullName(profileData.full_name);
           }
+
+          // Ambil role dari tabel profil_karyawan
+          const { data: roleData } = await supabase
+            .from('profil_karyawan')
+            .select('role')
+            .eq('id', authUser.id)
+            .single();
+
+          setUserRole(roleData?.role ?? null);
         } else {
           setUser(null);
           setFullName('');
+          setUserRole(null);
         }
       } catch (err) {
         console.error('Error fetching user:', err);
@@ -56,6 +68,7 @@ export default function Navbar() {
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setFullName('');
+        setUserRole(null);
         router.refresh();
       } else if (event === 'SIGNED_IN') {
         fetchUser();
@@ -149,9 +162,28 @@ export default function Navbar() {
               <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">
                 {initial}
               </div>
-              <span className="text-white text-[13px] font-medium max-w-[120px] truncate">
+              <span className="text-white text-[13px] font-medium max-w-[100px] truncate hidden sm:block">
                 {firstName || 'User'}
               </span>
+
+              {/* ── Tombol Panel VIP ── */}
+              {userRole === 'owner' && (
+                <Link
+                  href="/owner"
+                  className="text-[13px] font-bold text-[#2D6A4F] bg-white px-3 py-1.5 rounded-full hover:bg-[#E8F5E9] transition-colors duration-150 whitespace-nowrap"
+                >
+                  👑 Panel Owner
+                </Link>
+              )}
+              {userRole === 'admin' && (
+                <Link
+                  href="/admin/pesanan"
+                  className="text-[13px] font-bold text-[#2D6A4F] bg-white px-3 py-1.5 rounded-full hover:bg-[#E8F5E9] transition-colors duration-150 whitespace-nowrap"
+                >
+                  🛡️ Panel Admin
+                </Link>
+              )}
+
               <button
                 onClick={handleLogout}
                 disabled={loading}

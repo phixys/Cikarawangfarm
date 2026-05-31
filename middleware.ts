@@ -9,12 +9,11 @@ export async function middleware(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
     {
       cookies: {
-        getAll: () => {
-          return req.cookies.getAll().map((cookie) => ({
+        getAll: () =>
+          req.cookies.getAll().map((cookie) => ({
             name: cookie.name,
             value: cookie.value,
-          }));
-        },
+          })),
         setAll: (cookies) => {
           cookies.forEach((cookie) => {
             res.cookies.set(cookie.name, cookie.value, cookie.options ?? {});
@@ -24,45 +23,36 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
+  const { data: { session } } = await supabase.auth.getSession();
   const pathname = req.nextUrl.pathname;
 
-  // Route protection for authenticated sections
-  const isAdminArea = pathname.startsWith('/admin/stock');
-  const isOwnerFinance = pathname.startsWith('/owner/finance');
-  const isDashboardArea = pathname.startsWith('/dashboard');
+  const isAdminRoute = pathname.startsWith('/admin');
+  const isOwnerRoute = pathname.startsWith('/owner');
 
+  // Belum login — blokir semua rute panel
   if (!session) {
-    if (isAdminArea || isOwnerFinance || isDashboardArea) {
+    if (isAdminRoute || isOwnerRoute) {
       return NextResponse.redirect(new URL('/masuk', req.url));
     }
     return res;
   }
 
-  const userId = session.user.id;
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
+  // Sudah login — ambil role dari profil_karyawan (sumber kebenaran)
+  const { data: karyawan } = await supabase
+    .from('profil_karyawan')
     .select('role')
-    .eq('id', userId)
+    .eq('id', session.user.id)
     .single();
 
-  const role = profile?.role;
+  const role = karyawan?.role ?? null;
 
-  if (profileError || !role) {
+  // Proteksi rute /admin — hanya untuk role 'admin' dan 'owner'
+  if (isAdminRoute && role !== 'admin' && role !== 'owner') {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }
 
-  if (isAdminArea && role !== 'admin') {
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
-  }
-
-  if (isOwnerFinance && role !== 'owner') {
-    if (role === 'pelanggan') {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
+  // Proteksi rute /owner — hanya untuk role 'owner'
+  if (isOwnerRoute && role !== 'owner') {
     return NextResponse.redirect(new URL('/unauthorized', req.url));
   }
 
@@ -70,5 +60,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/owner/:path*', '/dashboard/:path*'],
+  matcher: ['/admin/:path*', '/owner/:path*'],
 };
