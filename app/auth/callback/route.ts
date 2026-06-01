@@ -50,15 +50,31 @@ export async function GET(request: Request) {
     // Cek profile untuk mendapatkan role
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('id, role')
       .eq('id', user.id)
       .single();
 
-    // Catat waktu login
-    await supabase
-      .from('profiles')
-      .update({ terakhir_login: new Date().toISOString() })
-      .eq('id', user.id);
+    // Jika profile belum ada (Google OAuth user baru), buat manual
+    if (!profile) {
+      const fullName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email ||
+        'Pengguna Baru';
+
+      await supabase.from('profiles').insert({
+        id: user.id,
+        full_name: fullName,
+        role: 'pelanggan',
+        terakhir_login: new Date().toISOString()
+      });
+    } else {
+      // Catat waktu login untuk user lama
+      await supabase
+        .from('profiles')
+        .update({ terakhir_login: new Date().toISOString() })
+        .eq('id', user.id);
+    }
 
     const role = profile?.role ?? 'pelanggan';
 

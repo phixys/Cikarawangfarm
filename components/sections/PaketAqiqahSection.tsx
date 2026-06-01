@@ -10,7 +10,7 @@ import Link from 'next/link';
 const packages = [
   {
     slug: 'barokah',
-    imgSrc: '/paket-barokah.jpg', // Pastikan gambar ada di folder public/
+    imgSrc: '/aqiqah.jpeg', // Pastikan gambar ada di folder public/
     badge: 'Tersedia',
     badgeClass: 'bg-white text-[#40916C] shadow-sm',
     title: 'Paket Aqiqah Barokah',
@@ -26,7 +26,7 @@ const packages = [
   },
   {
     slug: 'premium',
-    imgSrc: '/paket-premium.jpg',
+    imgSrc: '/aqiqah.jpeg',
     badge: 'Terpopuler',
     badgeClass: 'bg-yellow-100 text-yellow-800 shadow-sm',
     title: 'Paket Aqiqah Premium',
@@ -42,7 +42,7 @@ const packages = [
   },
   {
     slug: 'eksklusif',
-    imgSrc: '/paket-eksklusif.jpg',
+    imgSrc: '/aqiqah.jpeg',
     badge: 'Baru',
     badgeClass: 'bg-white text-[#2D6A4F] shadow-sm',
     title: 'Paket Aqiqah Eksklusif',

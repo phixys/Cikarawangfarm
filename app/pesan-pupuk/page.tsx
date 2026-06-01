@@ -32,6 +32,7 @@ function FormPesananPupukContent() {
   
   // 🟢 State untuk animasi tombol copy
   const [isCopied, setIsCopied] = useState(false);
+  const [qrisImage, setQrisImage] = useState('');
 
   // Form State Indentitas
   const [userId, setUserId] = useState(''); 
@@ -61,6 +62,9 @@ function FormPesananPupukContent() {
       if (session.user.id) setUserId(session.user.id);
       if (session.user.email) setEmail(session.user.email);
       if (session.user.user_metadata?.full_name) setNama(session.user.user_metadata.full_name);
+
+      const { data: qrisData } = await supabase.from('pengaturan_sistem').select('nilai').eq('kunci', 'qris_url').single();
+      if (qrisData?.nilai) setQrisImage(qrisData.nilai);
 
       setIsLoading(false);
     };
@@ -303,9 +307,15 @@ function FormPesananPupukContent() {
                 Silakan pindai kode QRIS di bawah ini melalui aplikasi e-Wallet atau M-Banking Anda, lalu lampirkan bukti transfernya.
               </p>
 
-              <div className="w-48 h-48 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center bg-white shadow-sm">
-                <QrCode size={64} className="text-gray-300 mb-2" />
-                <p className="text-xs text-gray-400 font-medium">QRIS Merchant Dummy</p>
+              <div className="w-48 h-48 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center bg-white shadow-sm overflow-hidden p-2">
+                {qrisImage ? (
+                  <img src={qrisImage} alt="QRIS Merchant" className="w-full h-full object-contain" />
+                ) : (
+                  <>
+                    <QrCode size={64} className="text-gray-300 mb-2" />
+                    <p className="text-xs text-gray-400 font-medium text-center px-2">QRIS Belum Diatur Owner</p>
+                  </>
+                )}
               </div>
 
               <div className="w-full max-w-sm bg-white border border-gray-100 rounded-xl p-4 space-y-3 shadow-sm">

@@ -11,7 +11,7 @@ const packages = [
   {
     key: 'barokah',
     // 🟢 Ganti background warna jadi path gambar
-    imgSrc: '/paket-barokah.jpg', 
+    imgSrc: '/aqiqah.jpeg', 
     badge: 'Tersedia',
     badgeClass: 'bg-white text-[#40916C] shadow-sm',
     title: 'Paket Aqiqah Barokah',
@@ -25,7 +25,7 @@ const packages = [
   },
   {
     key: 'premium',
-    imgSrc: '/paket-premium.jpg',
+    imgSrc: '/aqiqah.jpeg',
     badge: 'Terpopuler',
     badgeClass: 'bg-yellow-100 text-yellow-800 shadow-sm',
     title: 'Paket Aqiqah Premium',
@@ -40,7 +40,7 @@ const packages = [
   },
   {
     key: 'eksklusif',
-    imgSrc: '/paket-eksklusif.jpg',
+    imgSrc: '/aqiqah.jpeg',
     badge: 'Baru',
     badgeClass: 'bg-white text-[#2D6A4F] shadow-sm',
     title: 'Paket Aqiqah Eksklusif',

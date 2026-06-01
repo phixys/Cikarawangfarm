@@ -121,12 +121,14 @@ export default function KelollaKaryawanPage() {
 
     setLoadingId(id);
     try {
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('profiles')
         .update({ role: roleBaru })
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error || !data) throw new Error('Akses Ditolak: Anda tidak memiliki hak akses (RLS) untuk mengubah profil ini di database.');
 
       // Update state lokal tanpa fetch ulang
       setKaryawan((prev) =>
@@ -281,7 +283,7 @@ export default function KelollaKaryawanPage() {
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-6 py-4">
-                      Nama Karyawan
+                      Nama Akun
                     </th>
                     <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-4">
                       Role Saat Ini
@@ -388,11 +390,11 @@ export default function KelollaKaryawanPage() {
                             : 'bg-gray-400'
                         }`}
                       >
-                        {k.nama?.charAt(0)?.toUpperCase() ?? '?'}
+                        {k.full_name?.charAt(0)?.toUpperCase() ?? '?'}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-bold text-gray-900 text-sm truncate">{k.nama ?? '—'}</p>
+                          <p className="font-bold text-gray-900 text-sm truncate">{k.full_name ?? '—'}</p>
                           {isSelf && (
                             <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-md shrink-0">
                               Akun Anda

@@ -144,7 +144,7 @@ export default function MasukPage() {
             <div>
               <div className="flex items-center gap-3 mb-12">
                 <img
-                  src="/logo.png"
+                  src="/Logo.png"
                   alt="Cikarawang Farm Logo"
                   className="w-10 h-10 rounded-full object-cover bg-white p-0.5 shrink-0"
                 />

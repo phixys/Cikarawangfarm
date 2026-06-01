@@ -12,7 +12,16 @@ export default function AdminPesananPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('Semua');
+  const [jenisFilter, setJenisFilter] = useState('Semua');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, jenisFilter, searchTerm]);
 
   // Modal State
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -96,11 +105,16 @@ export default function AdminPesananPage() {
 
   // Filter & Search Logic
   const filteredOrders = orders.filter(order => {
-    const matchFilter = filter === 'Semua' || order.status === filter;
+    const matchStatus = filter === 'Semua' || order.status === filter;
+    const matchJenis = jenisFilter === 'Semua' || order.jenis_pesanan === jenisFilter;
     const matchSearch = order.kode_pesanan.toLowerCase().includes(searchTerm.toLowerCase()) || 
                         order.nama.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchFilter && matchSearch;
+    return matchStatus && matchJenis && matchSearch;
   });
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // Pilihan Status Berdasarkan Jenis Pesanan (Biar Admin gak salah pilih)
   const getStatusOptions = (jenis: string, penerimaan: string) => {
@@ -132,18 +146,33 @@ export default function AdminPesananPage() {
         <h1 className="text-2xl font-black text-gray-900 mb-6">Kelola Pesanan Masuk</h1>
         
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-          <div className="flex w-full md:w-auto overflow-x-auto pb-2 md:pb-0 gap-2">
-            {['Semua', 'Menunggu Konfirmasi', 'Dibatalkan'].map((f) => (
-              <button 
-                key={f} onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors border ${filter === f ? 'bg-[#2D6A4F] text-white border-[#2D6A4F]' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
-              >
-                {f}
-              </button>
-            ))}
+          <div className="flex flex-col xl:flex-row gap-4 w-full md:w-auto">
+            {/* Status Filter */}
+            <div className="flex w-full md:w-auto overflow-x-auto pb-2 md:pb-0 gap-2 hide-scrollbar">
+              {['Semua', 'Menunggu Konfirmasi', 'Dibatalkan'].map((f) => (
+                <button 
+                  key={f} onClick={() => setFilter(f)}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors border ${filter === f ? 'bg-[#2D6A4F] text-white border-[#2D6A4F]' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
+                >
+                  {f === 'Semua' ? 'Semua Status' : f}
+                </button>
+              ))}
+            </div>
+
+            {/* Jenis Pesanan Filter */}
+            <div className="flex w-full md:w-auto overflow-x-auto pb-2 md:pb-0 gap-2 hide-scrollbar border-l-0 xl:border-l xl:pl-4 border-gray-200">
+              {['Semua', 'ternak', 'aqiqah', 'pupuk'].map((f) => (
+                <button 
+                  key={f} onClick={() => setJenisFilter(f)}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors border capitalize ${jenisFilter === f ? 'bg-amber-500 text-white border-amber-500' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
+                >
+                  {f === 'Semua' ? 'Semua Jenis' : f}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="relative w-full md:w-72">
+          <div className="relative w-full md:w-64 shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" placeholder="Cari kode / nama..." 
@@ -171,10 +200,10 @@ export default function AdminPesananPage() {
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
                 <tr><td colSpan={6} className="p-10 text-center"><Loader2 className="animate-spin mx-auto text-[#2D6A4F] mb-2" />Memuat data pesanan...</td></tr>
-              ) : filteredOrders.length === 0 ? (
+              ) : paginatedOrders.length === 0 ? (
                 <tr><td colSpan={6} className="p-10 text-center text-gray-500">Belum ada pesanan ditemukan.</td></tr>
               ) : (
-                filteredOrders.map((order) => (
+                paginatedOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="p-4">
                       <div className="font-bold text-gray-900 text-sm">{order.kode_pesanan}</div>
@@ -205,6 +234,31 @@ export default function AdminPesananPage() {
           </table>
         </div>
       </div>
+
+      {/* ── PAGINATION ── */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-gray-200 gap-4">
+          <p className="text-sm text-gray-500 text-center sm:text-left">
+            Menampilkan <span className="font-semibold text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> hingga <span className="font-semibold text-gray-900">{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</span> dari <span className="font-semibold text-gray-900">{filteredOrders.length}</span> pesanan
+          </p>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Sebelumnya
+            </button>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Selanjutnya
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── MODAL DETAIL PESANAN ── */}
       {isModalOpen && selectedOrder && (
