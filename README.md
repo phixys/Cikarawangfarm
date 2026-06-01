@@ -1,9 +1,20 @@
 # Cikarawang Farm — Next.js App
+Cikarawang Farm adalah platform berbasis web yang menyediakan layanan pemesanan ternak dan paket aqiqah secara online. Website ini dirancang untuk memudahkan pelanggan dalam melihat katalog ternak, memilih paket aqiqah, serta memperoleh informasi pemesanan melalui antarmuka yang responsif dan mudah digunakan.
 
 ## Stack
 - Next.js 14 (App Router)
 - Tailwind CSS
 - TypeScript
+
+## Features
+
+- Landing Page Responsif
+- Katalog Ternak
+- Paket Aqiqah
+- Informasi Cara Pemesanan
+- Navigasi Interaktif
+- UI Modern dengan Tailwind CSS
+- Responsive Design untuk Desktop dan Mobile
 
 ## Getting Started
 
@@ -11,6 +22,8 @@
 npm install
 npm run dev
 ```
+## Live Demo 
+https://cikarawangfarm.vercel.app
 
 ## File Structure
 
@@ -66,3 +79,11 @@ Animal card images (optional): pass `imageSrc="/animals/your-image.jpg"` prop to
 | `primary-tint` | `#F0FFF4` | Section backgrounds, ghost buttons |
 | `primary-tint2` | `#D8F3DC` | Ghost button hover |
 | `danger` | `#EF4444` | Danger/cancel actions |
+
+## Team 
+- Apta Adi Nur Fiansah M0403241003
+- Nazwa Nadya Rahma M0403241060 
+- Muhammad Farhan Assafari M0403241176
+
+## License
+This project is developed for educational purposes.
