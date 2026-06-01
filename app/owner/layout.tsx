@@ -8,7 +8,7 @@ import { LogOut, TrendingUp, Settings, Crown, AlertTriangle, Users } from 'lucid
 
 const navLinks = [
   { name: 'Dashboard Owner', href: '/owner', icon: TrendingUp },
-  { name: 'Kelola Karyawan', href: '/owner/karyawan', icon: Users },
+  { name: 'Kelola Akun', href: '/owner/karyawan', icon: Users },
   { name: 'Pengaturan', href: '/owner/pengaturan', icon: Settings },
 ];
 

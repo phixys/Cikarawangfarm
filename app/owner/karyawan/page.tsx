@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
   Users,
@@ -13,6 +13,7 @@ import {
   Loader2,
   AlertTriangle,
   RefreshCw,
+  ChevronDown,
 } from 'lucide-react';
 
 // ── Tipe Data ────────────────────────────────────────────────────────────────
@@ -62,6 +63,69 @@ function RoleBadge({ role }: { role: Role }) {
   );
 }
 
+// ── Komponen Custom Dropdown Role ────────────────────────────────────────────
+function RoleSelect({ role, disabled, onChange, className = 'w-36' }: { role: Role, disabled: boolean, onChange: (r: Role) => void, className?: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const roles: { value: Role; label: string; icon: any; colorClass: string }[] = [
+    { value: 'owner', label: 'Owner', icon: Crown, colorClass: 'text-amber-500' },
+    { value: 'admin', label: 'Admin', icon: ShieldCheck, colorClass: 'text-blue-500' },
+    { value: 'pelanggan', label: 'Pelanggan', icon: User, colorClass: 'text-gray-500' },
+  ];
+
+  const current = roles.find(r => r.value === role) || roles[2];
+  const CurrentIcon = current.icon;
+
+  return (
+    <div className={`relative inline-block text-left ${className}`} ref={containerRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center justify-between text-sm font-semibold border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/30 transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-gray-300'}`}
+      >
+        <div className="flex items-center gap-2">
+          <CurrentIcon size={14} className={current.colorClass} />
+          {current.label}
+        </div>
+        <ChevronDown size={14} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 z-50 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden py-1">
+          {roles.map(r => {
+            const Icon = r.icon;
+            return (
+              <button
+                key={r.value}
+                onClick={() => {
+                  onChange(r.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-left hover:bg-gray-50 transition-colors ${role === r.value ? 'bg-gray-50 text-gray-900' : 'text-gray-600'}`}
+              >
+                <Icon size={14} className={r.colorClass} />
+                {r.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Halaman Utama ────────────────────────────────────────────────────────────
 export default function KelollaKaryawanPage() {
   const [karyawan, setKaryawan] = useState<Karyawan[]>([]);
@@ -100,7 +164,7 @@ export default function KelollaKaryawanPage() {
       if (error) throw error;
       setKaryawan((data as Karyawan[]) ?? []);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal memuat data karyawan.';
+      const msg = err instanceof Error ? err.message : 'Gagal memuat data akun.';
       showAlert(msg, 'error');
     } finally {
       setIsFetching(false);
@@ -136,7 +200,7 @@ export default function KelollaKaryawanPage() {
       );
 
       const nama = karyawan.find((k) => k.id === id)?.full_name ?? 'Pengguna';
-      showAlert(`Role ${nama} berhasil diubah menjadi "${roleBaru}". ✅`);
+      showAlert(`Role ${nama} berhasil diubah menjadi "${roleBaru}".`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal mengubah role.';
       showAlert(msg, 'error');
@@ -151,7 +215,7 @@ export default function KelollaKaryawanPage() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 size={40} className="animate-spin text-[#2D6A4F]" />
-          <p className="text-sm font-medium text-gray-400">Memuat data karyawan…</p>
+          <p className="text-sm font-medium text-gray-400">Memuat data akun…</p>
         </div>
       </div>
     );
@@ -205,7 +269,7 @@ export default function KelollaKaryawanPage() {
             <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center">
               <Users size={22} className="text-blue-600" />
             </div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Kelola Karyawan</h1>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Kelola Akun</h1>
           </div>
           <p className="text-sm text-gray-500 ml-[52px]">
             Lihat semua akun terdaftar dan atur hak akses (role) mereka.
@@ -352,16 +416,11 @@ export default function KelollaKaryawanPage() {
                               {isProcessing && (
                                 <Loader2 size={14} className="animate-spin text-gray-400" />
                               )}
-                              <select
-                                value={k.role}
-                                disabled={isProcessing}
-                                onChange={(e) => ubahRole(k.id, e.target.value as Role)}
-                                className="text-sm font-semibold border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/30 focus:border-[#2D6A4F] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:border-gray-300"
-                              >
-                                <option value="owner">👑 Owner</option>
-                                <option value="admin">🛡️ Admin</option>
-                                <option value="pelanggan">👤 Pelanggan</option>
-                              </select>
+                              <RoleSelect 
+                                role={k.role} 
+                                disabled={isProcessing} 
+                                onChange={(newRole) => ubahRole(k.id, newRole)} 
+                              />
                             </div>
                           )}
                         </td>
@@ -418,16 +477,14 @@ export default function KelollaKaryawanPage() {
                         {isProcessing && (
                           <Loader2 size={13} className="animate-spin text-gray-400" />
                         )}
-                        <select
-                          value={k.role}
-                          disabled={isProcessing}
-                          onChange={(e) => ubahRole(k.id, e.target.value as Role)}
-                          className="flex-1 text-sm font-semibold border border-gray-200 rounded-xl px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/30 transition-all disabled:opacity-50"
-                        >
-                          <option value="owner">👑 Owner</option>
-                          <option value="admin">🛡️ Admin</option>
-                          <option value="pelanggan">👤 Pelanggan</option>
-                        </select>
+                        <div className="flex-1">
+                          <RoleSelect 
+                            role={k.role} 
+                            disabled={isProcessing} 
+                            onChange={(newRole) => ubahRole(k.id, newRole)} 
+                            className="w-full"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>

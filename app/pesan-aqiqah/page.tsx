@@ -5,9 +5,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { 
-  User, Phone, Mail, Minus, Plus, MapPin, QrCode, 
-  CheckCircle2, Send, Map, Baby, Utensils, Copy, Loader2,
-  Package, AlertTriangle, UploadCloud
+  User, Phone, Mail, MapPin, QrCode, 
+  CheckCircle2, Send, Map, Baby, Copy, Loader2,
+  AlertTriangle, UploadCloud
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -18,7 +18,6 @@ const DAFTAR_PAKET: Record<string, { nama: string, porsi: number, harga: number 
   eksklusif: { nama: 'Paket Aqiqah Eksklusif', porsi: 100, harga: 5200000 }
 };
 
-const HARGA_EKSTRA_BOX = 25000;
 
 function FormPesananAqiqahContent() {
   const searchParams = useSearchParams();
@@ -38,8 +37,7 @@ function FormPesananAqiqahContent() {
   // State Detail Aqiqah
   const [namaAnak, setNamaAnak] = useState('');
   const [genderAnak, setGenderAnak] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
-  const [paketTerpilih, setPaketTerpilih] = useState(paketAwal);
-  const [ekstraBox, setEkstraBox] = useState(0);
+  const [paketTerpilih] = useState(paketAwal);
 
   // State Pengiriman
   const [penerimaan, setPenerimaan] = useState<'ambil' | 'diantar'>('diantar');
@@ -70,16 +68,21 @@ function FormPesananAqiqahContent() {
 
         setUserId(session.user.id);
         if (session.user.email) setEmail(session.user.email);
+        if (session.user.user_metadata?.full_name) setNamaLengkap(session.user.user_metadata.full_name);
 
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', session.user.id)
-          .single();
+        // Coba ambil profil (opsional, tidak menggagalkan halaman jika RLS memblokir)
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', session.user.id)
+            .single();
+          if (profile?.full_name) setNamaLengkap(profile.full_name);
+        } catch (_) {
+          // Profil tidak terbaca, gunakan metadata dari sesi Google
+        }
 
-        if (error || !profile) throw error;
-        setNamaLengkap(profile.full_name);
-
+        // Ambil gambar QRIS
         const { data: qrisData } = await supabase.from('pengaturan_sistem').select('nilai').eq('kunci', 'qris_url').single();
         if (qrisData?.nilai) setQrisImage(qrisData.nilai);
       } catch (error) {
@@ -97,10 +100,8 @@ function FormPesananAqiqahContent() {
   const pengaliSyariat = genderAnak === 'Laki-laki' ? 2 : 1; 
   const porsiDasar = paketInfo.porsi * pengaliSyariat;
   const subtotalPaket = paketInfo.harga * pengaliSyariat;
-  const subtotalEkstra = ekstraBox * HARGA_EKSTRA_BOX;
-  const totalPorsiNasi = porsiDasar + ekstraBox;
   const ongkir = penerimaan === 'diantar' ? zona : 0;
-  const totalTagihan = subtotalPaket + subtotalEkstra + ongkir;
+  const totalTagihan = subtotalPaket + ongkir;
 
   const formatRp = (angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
@@ -145,7 +146,7 @@ function FormPesananAqiqahContent() {
       // 2. Generate Kode Invoice Unik
       const randomNumbers = Math.floor(100000 + Math.random() * 900000);
       const generatedCode = `CF-AQQ-${randomNumbers}`;
-      const detailProduk = `${paketInfo.nama} (${pengaliSyariat} Ekor Domba - ${porsiDasar} Porsi Dasar)${ekstraBox > 0 ? ` + ${ekstraBox} Ekstra Box` : ''}`;
+      const detailProduk = `${paketInfo.nama} (${pengaliSyariat} Ekor Domba - ${porsiDasar} Porsi)`;
 
       // 3. Simpan Lengkap ke Tabel 'pesanan'
       const { error: insertError } = await supabase
@@ -159,7 +160,7 @@ function FormPesananAqiqahContent() {
             jumlah: pengaliSyariat, 
             penerimaan: penerimaan,
             pembayaran: 'QRIS', 
-            subtotal: subtotalPaket + subtotalEkstra,
+            subtotal: subtotalPaket,
             ongkir: ongkir,
             total: totalTagihan,
             status: 'Menunggu Konfirmasi',
@@ -170,7 +171,6 @@ function FormPesananAqiqahContent() {
             patokan: penerimaan === 'diantar' ? patokan : '',
             nama_anak: namaAnak,
             gender_anak: genderAnak,
-            ekstra_box: ekstraBox,
             bukti_transfer: filePath 
           }
         ]);
@@ -187,8 +187,6 @@ function FormPesananAqiqahContent() {
         namaPaket: paketInfo.nama, 
         jumlahEkor: pengaliSyariat,
         porsiDasar: porsiDasar,
-        ekstraBox: ekstraBox,
-        totalPorsi: totalPorsiNasi,
         totalHarga: totalTagihan,
         anak: `${namaAnak} (${genderAnak})`
       });
@@ -239,8 +237,7 @@ function FormPesananAqiqahContent() {
 
         <div className="bg-gray-50 rounded-xl p-4 text-xs text-left text-gray-500 mb-8 space-y-2">
           <div className="flex justify-between border-b border-gray-200 pb-1.5"><span className="font-semibold text-gray-800">{finalData.namaPaket} ({finalData.jumlahEkor} Ekor)</span><span>{finalData.porsiDasar} Porsi</span></div>
-          {finalData.ekstraBox > 0 && <div className="flex justify-between border-b border-gray-200 pb-1.5"><span className="font-semibold text-gray-800">Tambahan Nasi Box</span><span>{finalData.ekstraBox} Porsi</span></div>}
-          <p>• Total Nasi Box: <span className="font-semibold text-gray-800">{finalData.totalPorsi} Box</span></p>
+          <p>• Total Nasi Box: <span className="font-semibold text-gray-800">{finalData.porsiDasar} Box</span></p>
           <p>• Metode Pembayaran: <span className="font-semibold text-gray-800">QRIS</span></p>
           <p>• Total Transaksi: <span className="font-bold text-[#2D6A4F] text-sm">{formatRp(finalData.totalHarga)}</span></p>
         </div>
@@ -333,45 +330,6 @@ function FormPesananAqiqahContent() {
           </div>
         </section>
 
-        {/* DETAIL PAKET & ADD ON NASI BOX */}
-        <section>
-          <h2 className="text-[15px] font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-5"><Utensils size={18} className="text-[#2D6A4F]" /> Pilihan Paket & Tambahan Nasi</h2>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm text-gray-600 mb-2">Pilih Paket Dasar *</label>
-              <div className="relative"><Package className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <select 
-                  value={paketTerpilih} 
-                  onChange={(e) => { setPaketTerpilih(e.target.value); setEkstraBox(0); }} 
-                  className="w-full pl-11 pr-4 py-3.5 border border-gray-200 rounded-xl text-sm focus:border-[#2D6A4F] outline-none appearance-none bg-white font-semibold text-gray-800"
-                >
-                  {Object.entries(DAFTAR_PAKET).map(([key, pkg]) => (
-                    <option key={key} value={key}>
-                      {pkg.nama} — Harga Dasar {formatRp(pkg.harga)} / Ekor
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="bg-[#F0FFF4] border border-[#A7F3D0] p-5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <p className="font-bold text-[#2D6A4F] text-sm">Butuh Porsi Lebih?</p>
-                <p className="text-[13px] text-gray-600 mt-0.5">Tambah Ekstra Nasi Box (Rp 25.000 / Box)</p>
-              </div>
-              <div className="flex items-center border border-green-200 rounded-xl overflow-hidden w-fit bg-white shadow-sm">
-                <button type="button" onClick={() => { if (ekstraBox > 0) setEkstraBox(ekstraBox - 1) }} className="px-4 py-2.5 bg-white hover:bg-green-50 text-[#2D6A4F] transition-colors"><Minus size={16} /></button>
-                <input type="number" readOnly value={ekstraBox} className="w-12 text-center py-2.5 font-bold outline-none border-x border-green-200 text-gray-800" />
-                <button type="button" onClick={() => setEkstraBox(ekstraBox + 1)} className="px-4 py-2.5 bg-white hover:bg-green-50 text-[#2D6A4F] transition-colors"><Plus size={16} /></button>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center px-2 pt-2">
-              <span className="text-sm text-gray-500">Total Nasi Box yang Didapat:</span>
-              <span className="text-lg font-bold text-gray-800 bg-gray-100 px-3 py-1 rounded-lg">{totalPorsiNasi} Box</span>
-            </div>
-          </div>
-        </section>
 
         {/* OPSI PENERIMAAN */}
         <section>
@@ -479,7 +437,6 @@ function FormPesananAqiqahContent() {
               </div>
               <span className="font-semibold text-gray-800">{formatRp(subtotalPaket)}</span>
             </div>
-            {ekstraBox > 0 && <div className="flex justify-between text-[#2D6A4F]"><span>Ekstra Box ({ekstraBox} Box)</span><span className="font-semibold">{formatRp(subtotalEkstra)}</span></div>}
             <div className="flex justify-between"><span>Biaya Pengiriman</span><span className="font-semibold text-gray-800">{formatRp(ongkir)}</span></div>
           </div>
           <div className="flex justify-between items-center border-t border-gray-200 pt-4 mb-6"><span className="font-bold text-gray-800">Total Tagihan</span><span className="text-2xl font-bold text-[#2D6A4F]">{formatRp(totalTagihan)}</span></div>

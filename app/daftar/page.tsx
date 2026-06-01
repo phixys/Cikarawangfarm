@@ -110,7 +110,7 @@ export default function DaftarPage() {
           <div>
             <div className="inline-flex items-center gap-3 mb-10">
               <img
-                src="/logo.png"
+                src="/Logo.png"
                 alt="Cikarawang Farm Logo"
                 className="w-10 h-10 rounded-full object-cover bg-white p-0.5 shrink-0"
               />

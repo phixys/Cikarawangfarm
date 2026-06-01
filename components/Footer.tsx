@@ -27,7 +27,7 @@ export default function Footer() {
           <div className="md:col-span-1">
             <div className="flex items-center gap-2.5 mb-3">
               <Image
-                src="/logo.png"
+                src="/Logo.png"
                 alt="Cikarawang Farm"
                 width={34}
                 height={34}
