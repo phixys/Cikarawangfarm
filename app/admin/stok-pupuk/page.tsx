@@ -111,13 +111,18 @@ export default function AdminStokPupuk() {
         <h3 className="text-lg font-bold text-gray-900 mb-6">Ubah Jumlah Stok</h3>
         
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <input 
-            type="number" 
-            value={ubahStok}
-            onChange={(e) => setUbahStok(e.target.value === '' ? '' : Number(e.target.value))}
-            placeholder="Masukkan angka..."
-            className="w-full sm:w-48 text-center text-xl font-bold py-4 bg-gray-50 border border-gray-300 rounded-2xl outline-none focus:border-[#2D6A4F] focus:ring-2 focus:ring-[#2D6A4F]/20 transition-all"
-          />
+          <div className="relative w-full sm:w-64">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Package className="h-6 w-6 text-gray-400" />
+            </div>
+            <input 
+              type="number" 
+              value={ubahStok}
+              onChange={(e) => setUbahStok(e.target.value === '' ? '' : Number(e.target.value))}
+              placeholder="Jumlah karung..."
+              className="w-full pl-12 pr-4 text-gray-900 text-lg font-bold py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl outline-none focus:bg-white focus:border-[#2D6A4F] focus:ring-4 focus:ring-[#2D6A4F]/10 transition-all placeholder:text-gray-400 placeholder:font-medium"
+            />
+          </div>
           
           <div className="flex flex-wrap gap-3 w-full sm:w-auto">
             <button 

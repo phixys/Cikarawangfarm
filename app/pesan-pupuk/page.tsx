@@ -11,12 +11,6 @@ function formatRupiah(n: number) {
   return 'Rp ' + n.toLocaleString('id-ID');
 }
 
-const ZONAS = [
-  { price: 25000, label: 'Zona 1: Dramaga, Cikarawang, Ciomas, Bogor Barat' },
-  { price: 50000, label: 'Zona 2: Kota Bogor Lainnya (Tengah, Utara, Timur, Selatan)' },
-  { price: 75000, label: 'Zona 3: Kabupaten Bogor Luar (Cibinong, Parung, Ciawi, dll)' },
-];
-
 function FormPesananPupukContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -42,7 +36,8 @@ function FormPesananPupukContent() {
 
   // Form State Penerimaan
   const [metodePenerimaan, setMetodePenerimaan] = useState('ambil');
-  const [zona, setZona] = useState('25000');
+  const [tarifOngkir, setTarifOngkir] = useState({ zona1: 50000, zona2: 100000, zona3: 150000 });
+  const [zona, setZona] = useState<number>(50000);
   const [alamat, setAlamat] = useState('');
   const [patokan, setPatokan] = useState('');
 
@@ -63,8 +58,23 @@ function FormPesananPupukContent() {
       if (session.user.email) setEmail(session.user.email);
       if (session.user.user_metadata?.full_name) setNama(session.user.user_metadata.full_name);
 
-      const { data: qrisData } = await supabase.from('pengaturan_sistem').select('nilai').eq('kunci', 'qris_url').single();
-      if (qrisData?.nilai) setQrisImage(qrisData.nilai);
+      const { data: pengaturan } = await supabase.from('pengaturan_sistem').select('*');
+      if (pengaturan) {
+        const qris = pengaturan.find(p => p.kunci === 'qris_url')?.nilai;
+        if (qris) setQrisImage(qris);
+        
+        const z1 = pengaturan.find(p => p.kunci === 'ongkir_zona_1')?.nilai;
+        const z2 = pengaturan.find(p => p.kunci === 'ongkir_zona_2')?.nilai;
+        const z3 = pengaturan.find(p => p.kunci === 'ongkir_zona_3')?.nilai;
+        
+        const tarif = {
+          zona1: z1 ? Number(z1) : 50000,
+          zona2: z2 ? Number(z2) : 100000,
+          zona3: z3 ? Number(z3) : 150000
+        };
+        setTarifOngkir(tarif);
+        setZona(tarif.zona1);
+      }
 
       setIsLoading(false);
     };
@@ -74,7 +84,7 @@ function FormPesananPupukContent() {
 
   // Kalkulasi Harga
   const subtotal = qty * hargaPerKarung;
-  const ongkir = metodePenerimaan === 'diantar' ? Number(zona) : 0;
+  const ongkir = metodePenerimaan === 'diantar' ? zona : 0;
   const grandTotal = subtotal + ongkir;
 
   // 🟢 FUNGSI YANG TADI HILANG KITA TARUH DI SINI
@@ -270,10 +280,10 @@ function FormPesananPupukContent() {
               <div className="p-5 bg-gray-50 border border-gray-200 rounded-xl space-y-4 animate-in fade-in">
                 <div>
                   <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Pilih Zona Area Bogor *</label>
-                  <select value={zona} onChange={(e) => setZona(e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:border-[#2D6A4F] outline-none text-sm bg-white">
-                    {ZONAS.map((z) => (
-                      <option key={z.price} value={z.price}>{z.label} — Rp {z.price.toLocaleString('id-ID')}</option>
-                    ))}
+                  <select value={zona} onChange={(e) => setZona(Number(e.target.value))} className="w-full p-3 border border-gray-300 rounded-lg focus:border-[#2D6A4F] outline-none text-sm bg-white">
+                    <option value={tarifOngkir.zona1}>Zona 1: Dramaga, Cikarawang, Ciomas, Bogor Barat — Rp {tarifOngkir.zona1.toLocaleString('id-ID')}</option>
+                    <option value={tarifOngkir.zona2}>Zona 2: Kota Bogor Lainnya (Tengah, Utara, Timur, Selatan) — Rp {tarifOngkir.zona2.toLocaleString('id-ID')}</option>
+                    <option value={tarifOngkir.zona3}>Zona 3: Kabupaten Bogor Luar (Cibinong, Parung, Ciawi, dll) — Rp {tarifOngkir.zona3.toLocaleString('id-ID')}</option>
                   </select>
                 </div>
                 <div>

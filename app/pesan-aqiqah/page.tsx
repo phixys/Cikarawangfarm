@@ -41,6 +41,7 @@ function FormPesananAqiqahContent() {
 
   // State Pengiriman
   const [penerimaan, setPenerimaan] = useState<'ambil' | 'diantar'>('diantar');
+  const [tarifOngkir, setTarifOngkir] = useState({ zona1: 50000, zona2: 100000, zona3: 150000 });
   const [zona, setZona] = useState<number>(50000); 
   const [alamat, setAlamat] = useState('');
   const [patokan, setPatokan] = useState('');
@@ -82,9 +83,24 @@ function FormPesananAqiqahContent() {
           // Profil tidak terbaca, gunakan metadata dari sesi Google
         }
 
-        // Ambil gambar QRIS
-        const { data: qrisData } = await supabase.from('pengaturan_sistem').select('nilai').eq('kunci', 'qris_url').single();
-        if (qrisData?.nilai) setQrisImage(qrisData.nilai);
+        // Ambil gambar QRIS dan Tarif Ongkir
+        const { data: pengaturan } = await supabase.from('pengaturan_sistem').select('*');
+        if (pengaturan) {
+          const qris = pengaturan.find(p => p.kunci === 'qris_url')?.nilai;
+          if (qris) setQrisImage(qris);
+          
+          const z1 = pengaturan.find(p => p.kunci === 'ongkir_zona_1')?.nilai;
+          const z2 = pengaturan.find(p => p.kunci === 'ongkir_zona_2')?.nilai;
+          const z3 = pengaturan.find(p => p.kunci === 'ongkir_zona_3')?.nilai;
+          
+          const tarif = {
+            zona1: z1 ? Number(z1) : 50000,
+            zona2: z2 ? Number(z2) : 100000,
+            zona3: z3 ? Number(z3) : 150000
+          };
+          setTarifOngkir(tarif);
+          setZona(tarif.zona1); // Set default zona ke zona 1 terbaru
+        }
       } catch (error) {
         console.error('Error checking auth:', error);
         router.push('/masuk');
@@ -354,9 +370,9 @@ function FormPesananAqiqahContent() {
                       onChange={(e) => setZona(Number(e.target.value))} 
                       className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-[#2D6A4F] outline-none appearance-none bg-white font-medium text-gray-700"
                     >
-                      <option value={50000}>Zona 1: Dramaga, Cikarawang, Ciomas, Bogor Barat — Rp 50.000</option>
-                      <option value={100000}>Zona 2: Kota Bogor Lainnya (Tengah, Utara, Timur, Selatan, Tanah Sareal) — Rp 100.000</option>
-                      <option value={150000}>Zona 3: Kabupaten Bogor Luar (Cibinong, Bojonggede, Parung, Ciawi, dll) — Rp 150.000</option>
+                      <option value={tarifOngkir.zona1}>Zona 1: Dramaga, Cikarawang, Ciomas, Bogor Barat — Rp {tarifOngkir.zona1.toLocaleString('id-ID')}</option>
+                      <option value={tarifOngkir.zona2}>Zona 2: Kota Bogor Lainnya (Tengah, Utara, Timur, Selatan, Tanah Sareal) — Rp {tarifOngkir.zona2.toLocaleString('id-ID')}</option>
+                      <option value={tarifOngkir.zona3}>Zona 3: Kabupaten Bogor Luar (Cibinong, Bojonggede, Parung, Ciawi, dll) — Rp {tarifOngkir.zona3.toLocaleString('id-ID')}</option>
                     </select>
                   </div>
                 </div>
