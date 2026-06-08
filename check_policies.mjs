@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 
-// read env vars
 const envFile = fs.readFileSync(path.join(process.cwd(), '.env.local'), 'utf-8');
 let url = '', key = '';
 envFile.split('\n').forEach(line => {
