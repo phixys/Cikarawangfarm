@@ -97,6 +97,37 @@ export default function AdminPesananPage() {
         throw new Error('Gagal update: Terblokir oleh aturan keamanan (RLS) Supabase atau pesanan tidak ditemukan. Silakan tambahkan policy UPDATE untuk admin.');
       }
 
+      // === LOGIKA SINKRONISASI KATALOG TERNAK ===
+      if (selectedOrder.jenis_pesanan === 'ternak' && selectedOrder.produk) {
+        const match = selectedOrder.produk.match(/Ternak Domba: (.*)/);
+        if (match) {
+          // match[1] contoh: "BT-004 (Batur), BT-005 (Merino)"
+          const items = match[1].split(', ');
+          const idsToUpdate = items.map((item: string) => item.split(' ')[0]);
+
+          let katalogStatus = 'Menunggu Verifikasi';
+          const terjualStatuses = ['Pemeriksaan Kesehatan', 'Sedang Dikirim', 'Dikirim', 'Siap Diambil', 'Selesai'];
+          
+          if (terjualStatuses.includes(newStatus)) {
+            katalogStatus = 'Terjual';
+          } else if (newStatus === 'Dibatalkan') {
+            katalogStatus = 'Tersedia';
+          }
+
+          if (idsToUpdate.length > 0) {
+            const { error: katalogErr } = await supabase
+              .from('katalog_ternak')
+              .update({ status: katalogStatus })
+              .in('id', idsToUpdate);
+
+            if (katalogErr) {
+              console.error('Gagal sinkronisasi katalog:', katalogErr);
+            }
+          }
+        }
+      }
+      // ===========================================
+
       // Update state lokal biar gak perlu refresh halaman
       setOrders(orders.map(o => o.id === selectedOrder.id ? { ...o, status: newStatus } : o));
       alert('Status pesanan berhasil diperbarui!');
@@ -113,8 +144,15 @@ export default function AdminPesananPage() {
   const filteredOrders = orders.filter(order => {
     const matchStatus = filter === 'Semua' || order.status === filter;
     const matchJenis = jenisFilter === 'Semua' || order.jenis_pesanan === jenisFilter;
-    const matchSearch = order.kode_pesanan.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        order.nama.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Gunakan fallback string kosong agar tidak error jika ada data null di database
+    const kode = order.kode_pesanan || '';
+    const namaPemesan = order.nama || '';
+    const searchLower = searchTerm.toLowerCase();
+    
+    const matchSearch = kode.toLowerCase().includes(searchLower) || 
+                        namaPemesan.toLowerCase().includes(searchLower);
+                        
     return matchStatus && matchJenis && matchSearch;
   });
 
