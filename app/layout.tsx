@@ -6,6 +6,9 @@ import Footer from '@/components/Footer'; // Pastikan path ini sesuai
 export const metadata: Metadata = {
   title: 'Cikarawang Farm',
   description: 'Pesan ternak dan aqiqah segar langsung dari farm',
+  icons: {
+    icon: '/logo.png',
+  },
 };
 
 export default function RootLayout({

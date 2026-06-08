@@ -84,20 +84,26 @@ export default function AdminPesananPage() {
     
     setIsUpdating(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('pesanan')
         .update({ status: newStatus })
-        .eq('id', selectedOrder.id);
+        .eq('id', selectedOrder.id)
+        .select();
 
       if (error) throw error;
+      
+      // Jika RLS memblokir update, error akan null tapi data kosong
+      if (!data || data.length === 0) {
+        throw new Error('Gagal update: Terblokir oleh aturan keamanan (RLS) Supabase atau pesanan tidak ditemukan. Silakan tambahkan policy UPDATE untuk admin.');
+      }
 
       // Update state lokal biar gak perlu refresh halaman
       setOrders(orders.map(o => o.id === selectedOrder.id ? { ...o, status: newStatus } : o));
       alert('Status pesanan berhasil diperbarui!');
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Gagal update status:', error);
-      alert('Terjadi kesalahan saat memperbarui status.');
+      alert(error.message || 'Terjadi kesalahan saat memperbarui status.');
     } finally {
       setIsUpdating(false);
     }

@@ -68,9 +68,9 @@ function FormPesananPupukContent() {
         const z3 = pengaturan.find(p => p.kunci === 'ongkir_zona_3')?.nilai;
         
         const tarif = {
-          zona1: z1 ? Number(z1) : 50000,
-          zona2: z2 ? Number(z2) : 100000,
-          zona3: z3 ? Number(z3) : 150000
+          zona1: z1 != null && z1 !== '' ? Number(z1) : 50000,
+          zona2: z2 != null && z2 !== '' ? Number(z2) : 100000,
+          zona3: z3 != null && z3 !== '' ? Number(z3) : 150000
         };
         setTarifOngkir(tarif);
         setZona(tarif.zona1);

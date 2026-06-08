@@ -98,8 +98,7 @@ export default function PengaturanSistemPage() {
       for (const item of updates) {
         const { error } = await supabase
           .from('pengaturan_sistem')
-          .update({ nilai: item.nilai })
-          .eq('kunci', item.kunci);
+          .upsert({ kunci: item.kunci, nilai: item.nilai }, { onConflict: 'kunci' });
 
         if (error) throw new Error(`Gagal update ${item.kunci}: ${error.message}`);
       }
