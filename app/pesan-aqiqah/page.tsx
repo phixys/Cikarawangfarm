@@ -278,7 +278,7 @@ function FormPesananAqiqahContent() {
       <div className="p-8 md:p-10 border-b border-gray-100 bg-[#F0FFF4]/50">
         <div className="flex flex-col sm:flex-row gap-6 items-start">
           <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shrink-0 border border-green-100 shadow-sm">
-            <Image src="/logo.png" alt="Logo" width={48} height={48} className="object-contain" />
+            <Image src="/Logo.png" alt="Logo" width={48} height={48} className="object-contain" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Form Pemesanan Aqiqah</h1>
@@ -357,7 +357,7 @@ function FormPesananAqiqahContent() {
             </button>
             <button type="button" onClick={() => setPenerimaan('ambil')} className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all ${penerimaan === 'ambil' ? 'border-[#2D6A4F] bg-[#F0FFF4]' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${penerimaan === 'ambil' ? 'border-[#2D6A4F]' : 'border-gray-300'}`}>{penerimaan === 'ambil' && <div className="w-2.5 h-2.5 bg-[#2D6A4F] rounded-full" />}</div>
-              <div><p className="font-semibold text-sm text-gray-800">Ambil Sendiri di Peternakan</p><p className="text-[13px] text-gray-500 mt-0.5">Gratis. Ambil langsung di rumah produksi utama kami.</p></div>
+              <div><p className="font-semibold text-sm text-gray-800">Ambil Sendiri di Rumah Pengolahan</p><p className="text-[13px] text-gray-500 mt-0.5">Gratis. Ambil langsung di rumah produksi utama kami.</p></div>
             </button>
             
             {penerimaan === 'diantar' && (
