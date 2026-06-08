@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Cikarawang Farm',
   description: 'Pesan ternak dan aqiqah segar langsung dari farm',
   icons: {
-    icon: '/logo.png',
+    icon: '/Logo.png',
   },
 };
 
