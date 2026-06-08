@@ -14,7 +14,7 @@ const navLinks = [
 export default function Footer() {
   const pathname = usePathname();
 
-  // Sembunyikan Footer di halaman masuk dan daftar
+  // hiding footer on login and register page
   if (pathname === '/masuk' || pathname === '/daftar') {
     return null;
   }
