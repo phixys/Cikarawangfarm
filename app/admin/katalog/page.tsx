@@ -189,16 +189,14 @@ export default function AdminKatalogPage() {
                   {/* Kolom Aksi */}
                   <td className="py-4 pr-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleToggleStatus(ternak.id, ternak.status)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
-                          ternak.status === 'Tersedia'
-                            ? 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100'
-                            : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
-                        }`}
-                      >
-                        {ternak.status === 'Tersedia' ? 'Tandai Terjual' : 'Jual Kembali'}
-                      </button>
+                      {ternak.status === 'Tersedia' && (
+                        <button
+                          onClick={() => handleToggleStatus(ternak.id, ternak.status)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border bg-white border-gray-300 text-gray-600 hover:bg-gray-100"
+                        >
+                          Tandai Terjual
+                        </button>
+                      )}
                       
                       <button
                         onClick={() => handleDelete(ternak.id)}
